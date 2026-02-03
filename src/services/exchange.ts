@@ -20,13 +20,19 @@ export class ExchangeRateService {
 
       const data = await response.json();
 
+      // 添加空值检查
+      if (!data.rates || !data.rates.CNY) {
+        throw new Error('API 返回数据格式错误');
+      }
+
       this.currentRate = data.rates.CNY;
       this.lastUpdate = new Date();
 
       // 缓存汇率
       this.cacheRate(data);
 
-      return this.currentRate;
+      // 此时 currentRate 保证不为 null
+      return this.currentRate!;
     } catch (error) {
       console.error('获取汇率失败:', error);
 
@@ -35,7 +41,8 @@ export class ExchangeRateService {
       if (cached) {
         this.currentRate = cached.rate;
         this.lastUpdate = new Date(cached.timestamp);
-        return this.currentRate;
+        // 此时 currentRate 保证不为 null
+        return this.currentRate!;
       }
 
       throw error;
