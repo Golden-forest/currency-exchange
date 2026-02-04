@@ -16,28 +16,26 @@ export function ExchangeRateCard() {
   };
 
   return (
-    <div className="bg-bg-card border border-gold-border rounded-xl p-4 text-center backdrop-blur-sm">
-      <div className="flex items-center justify-center gap-2 mb-2">
-        <span className="text-text-secondary text-sm">汇率:</span>
-        {isLoading ? (
-          <span className="text-gold text-lg font-semibold">加载中...</span>
-        ) : error ? (
-          <span className="text-red-500 text-lg font-semibold">{error}</span>
-        ) : (
-          <span className="text-gold text-lg font-semibold">
+    <div
+      onClick={refetch}
+      className="text-center cursor-pointer hover:opacity-80 transition-opacity"
+    >
+      {isLoading ? (
+        <span className="text-text-tertiary text-xs">加载中...</span>
+      ) : error ? (
+        <span className="text-red-400 text-xs">{error}</span>
+      ) : (
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-text-tertiary text-xs">
             1 KRW = {rate ? rate.toFixed(4) : '0'} CNY
           </span>
-        )}
-      </div>
-      <div className="text-text-secondary text-xs">
-        {lastUpdate && `更新: ${formatTime(lastUpdate)}`}
-      </div>
-      <button
-        onClick={refetch}
-        className="mt-2 text-xs text-text-secondary hover:text-gold transition-colors"
-      >
-        刷新汇率
-      </button>
+          {lastUpdate && (
+            <span className="text-text-tertiary text-xs">
+              更新: {formatTime(lastUpdate)}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

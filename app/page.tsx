@@ -2,64 +2,90 @@
 
 import { useState, useEffect } from 'react';
 import { exchangeService } from '@/services/exchange';
-import { useCurrencyStorage } from '@/hooks/useLocalStorage';
-import { Currency } from '@/types';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ExchangeRateCard } from '@/components/ExchangeRateCard';
 import { ConversionCard } from '@/components/ConversionCard';
-import { CurrencySelector } from '@/components/CurrencySelector';
 import { QuickButtons } from '@/components/QuickButtons';
 
-export default function Home() {
-  const { currency, setCurrency, amount, setAmount } = useCurrencyStorage();
-  const [result, setResult] = useState<number>(0);
+type EditingCard = 'cny' | 'krw' | null;
 
-  // 计算转换结果
+export default function Home() {
+  // 固定:CNY在上,KRW在下
+  const [cnyAmount, setCnyAmount] = useLocalStorage<number>('cnyAmount', 0);
+  const [krwAmount, setKrwAmount] = useLocalStorage<number>('krwAmount', 0);
+  const [editingCard, setEditingCard] = useState<EditingCard>(null);
+  const [lastEdited, setLastEdited] = useState<'cny' | 'krw'>('cny');
+
+  // 根据最后编辑的货币计算另一个
   useEffect(() => {
     if (!exchangeService.getCurrentRate()) return;
 
     try {
-      let converted = 0;
-      if (currency === 'KRW') {
-        converted = exchangeService.krwToCny(amount);
+      if (lastEdited === 'cny') {
+        // 从CNY计算KRW
+        const krw = exchangeService.cnyToKrw(cnyAmount);
+        setKrwAmount(krw);
       } else {
-        converted = exchangeService.cnyToKrw(amount);
+        // 从KRW计算CNY
+        const cny = exchangeService.krwToCny(krwAmount);
+        setCnyAmount(cny);
       }
-      setResult(converted);
     } catch (error) {
       console.error('转换失败:', error);
     }
-  }, [amount, currency]);
+  }, [cnyAmount, krwAmount, lastEdited]);
 
-  const handleCurrencyChange = (newCurrency: Currency) => {
-    setCurrency(newCurrency);
-    // 交换金额
-    setAmount(result);
+  const handleCnyChange = (newAmount: number) => {
+    setCnyAmount(newAmount);
+    setLastEdited('cny');
   };
 
-  const handleAmountSelect = (value: number) => {
-    setAmount(value);
+  const handleKrwChange = (newAmount: number) => {
+    setKrwAmount(newAmount);
+    setLastEdited('krw');
   };
 
-  const inputCurrency: Currency = currency;
-  const resultCurrency: Currency = currency === 'KRW' ? 'CNY' : 'KRW';
+  const handleQuickSelect = (amount: number) => {
+    if (lastEdited === 'cny') {
+      setCnyAmount(amount);
+    } else {
+      setKrwAmount(amount);
+    }
+  };
 
   return (
-    <main className="min-h-screen bg-gradient-dark flex items-center justify-center p-4">
-      <div className="w-full max-w-md flex flex-col gap-5 animate-fade-in-up">
-        {/* 汇率信息 */}
-        <ExchangeRateCard />
-
-        {/* 转换区域 */}
-        <div className="flex flex-col gap-4">
-          <ConversionCard amount={amount} currency={inputCurrency} />
-          <ConversionCard amount={result} currency={resultCurrency} />
+    <main className="min-h-screen bg-gradient-dark flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md flex flex-col gap-5 animate-fade-in-up flex-1">
+        {/* 转换区域 - CNY固定在上,KRW固定在下 */}
+        <div className="flex flex-col gap-4 flex-1">
+          <ConversionCard
+            amount={cnyAmount}
+            currency="CNY"
+            onAmountChange={handleCnyChange}
+            isEditing={editingCard === 'cny'}
+            onEditStart={() => setEditingCard('cny')}
+            onEditEnd={() => setEditingCard(null)}
+          />
+          <ConversionCard
+            amount={krwAmount}
+            currency="KRW"
+            onAmountChange={handleKrwChange}
+            isEditing={editingCard === 'krw'}
+            onEditStart={() => setEditingCard('krw')}
+            onEditEnd={() => setEditingCard(null)}
+          />
         </div>
 
-        {/* 货币选择 */}
-        <CurrencySelector selected={currency} onSelect={handleCurrencyChange} />
-
         {/* 快捷按钮 */}
-        <QuickButtons currency={currency} onSelectAmount={handleAmountSelect} />
+        <QuickButtons
+          currency={lastEdited === 'cny' ? 'CNY' : 'KRW'}
+          onSelectAmount={handleQuickSelect}
+        />
+      </div>
+
+      {/* 汇率信息 - 移到最底部 */}
+      <div className="mt-4">
+        <ExchangeRateCard />
       </div>
     </main>
   );
