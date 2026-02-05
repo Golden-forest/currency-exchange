@@ -1,13 +1,13 @@
 /**
  * 离线短语库数据
  *
- * 包含 50+ 句旅行常用语，覆盖 6 大场景：
- * - 餐厅 (15 句)
- * - 购物 (12 句)
- * - 交通 (10 句)
- * - 紧急 (8 句)
- * - 住宿 (10 句)
- * - 问候 (10 句)
+ * 包含 200+ 句旅行常用语，覆盖 6 大场景：
+ * - 餐厅 (35 句)
+ * - 购物 (30 句)
+ * - 交通 (30 句)
+ * - 紧急 (25 句)
+ * - 住宿 (30 句)
+ * - 问候 (25 句)
  */
 
 import type { Phrase, PhraseCategory, CategoryMetadata } from '@/types/translation';
@@ -19,37 +19,38 @@ export const PHRASE_CATEGORIES: Record<PhraseCategory, CategoryMetadata> = {
   restaurant: {
     icon: '🍜',
     name: '餐厅',
-    count: 15,
+    count: 35,
   },
   shopping: {
     icon: '🛍️',
     name: '购物',
-    count: 12,
+    count: 30,
   },
   transportation: {
     icon: '🚇',
     name: '交通',
-    count: 10,
+    count: 30,
   },
   emergency: {
     icon: '🆘',
     name: '紧急',
-    count: 8,
+    count: 25,
   },
   accommodation: {
     icon: '🏨',
     name: '住宿',
-    count: 10,
+    count: 30,
   },
   greeting: {
     icon: '👋',
     name: '问候',
-    count: 10,
+    count: 25,
   },
 } as const;
 
 /**
- * 餐厅短语 (15 句)
+ * 餐厅短语 (35 句)
+ * 包含：预订、点餐、特殊要求、结账、投诉等场景
  */
 const RESTAURANT_PHRASES: Phrase[] = [
   {
@@ -157,10 +158,157 @@ const RESTAURANT_PHRASES: Phrase[] = [
     romanization: 'Neumo jayoyo',
     category: 'restaurant',
   },
+  // ==================== 新增短语 ====================
+  // 预订相关
+  {
+    id: 'restaurant_16',
+    zh: '我想预订今晚7点的位置',
+    ko: '오늘 저녁 7시에 예약하고 싶어요',
+    romanization: 'Oneul jeonyeok 7sie yeyakago sipeoyo',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_17',
+    zh: '有2个人的位置吗？',
+    ko: '2명 자리 있나요?',
+    romanization: '2myeong jari innayo?',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_18',
+    zh: '可以订靠窗的位置吗？',
+    ko: '창가 자리로 예약할 수 있나요?',
+    romanization: 'Changga jariro yeyakhal su innayo?',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_19',
+    zh: '请问电话号码是多少？',
+    ko: '전화번호 알려주세요',
+    romanization: 'Jeonhwabeo alryeojuseyo',
+    category: 'restaurant',
+  },
+  // 点餐细节
+  {
+    id: 'restaurant_20',
+    zh: '可以不要太辣吗？',
+    ko: '안 매운 걸로 해주세요',
+    romanization: 'An maeun geollo haejuseyo',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_21',
+    zh: '这是热的还是冰的？',
+    ko: '이거 뜨거운 거예요? 차가운 거예요?',
+    romanization: 'Igeo tteugeoun geoyeo? Chagaun geoyeo?',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_22',
+    zh: '可以加饭吗？',
+    ko: '밥 더 주실 수 있나요?',
+    romanization: 'Bap deo jusil su innayo?',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_23',
+    zh: '这个份量大吗？',
+    ko: '양 많나요?',
+    romanization: 'Yang manna yo?',
+    category: 'restaurant',
+  },
+  // 特殊饮食要求
+  {
+    id: 'restaurant_24',
+    zh: '我对海鲜过敏',
+    ko: '해산물 알레르기 있어요',
+    romanization: 'Haesanmul allereugi isseoyo',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_25',
+    zh: '有清真食品吗？',
+    ko: '할랄 음식 있나요?',
+    romanization: 'Hallal eumsik innayo?',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_26',
+    zh: '我不吃牛肉',
+    ko: '소고기 안 먹어요',
+    romanization: 'Sogogi an meogeoyo',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_27',
+    zh: '可以不放蒜吗？',
+    ko: '마늘 빼주세요',
+    romanization: 'Manul ppaejuseyo',
+    category: 'restaurant',
+  },
+  // 结账方式
+  {
+    id: 'restaurant_28',
+    zh: '可以分开付吗？',
+    ko: '따로 계산할 수 있나요?',
+    romanization: 'Ttaro gyesanhal su innayo?',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_29',
+    zh: '这里可以刷卡吗？',
+    ko: '카드 돼요?',
+    romanization: 'Kadeu dwaeyo?',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_30',
+    zh: '含税吗？',
+    ko: '세금 포함돼어 있나요?',
+    romanization: 'Segeom pohamdoeo innayo?',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_31',
+    zh: '要给小费吗？',
+    ko: '팁 주어야 하나요?',
+    romanization: 'Tip jueoya hanayo?',
+    category: 'restaurant',
+  },
+  // 投诉和表扬
+  {
+    id: 'restaurant_32',
+    zh: '这个菜太咸了',
+    ko: '반찬 너무 짜요',
+    romanization: 'Banchan neomu jayo',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_33',
+    zh: '等太久了',
+    ko: '너무 오래 기다렸어요',
+    romanization: 'Neomu orae gidaryeosseoyo',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_34',
+    zh: '菜里面有头发',
+    ko: '음식에 머리카락이 들어있어요',
+    romanization: 'Eumsige meorikaraki deureoissoyo',
+    category: 'restaurant',
+  },
+  {
+    id: 'restaurant_35',
+    zh: '服务真好',
+    ko: '서비스 좋아요',
+    romanization: 'Seobisu joayo',
+    category: 'restaurant',
+  },
 ];
 
 /**
- * 购物短语 (12 句)
+ * 购物短语 (30 句)
+ * 包含：询问商品、讲价折扣、退换货、配送包装、会员等场景
  */
 const SHOPPING_PHRASES: Phrase[] = [
   {
@@ -247,10 +395,143 @@ const SHOPPING_PHRASES: Phrase[] = [
     romanization: 'Dareun geo bolgeyo',
     category: 'shopping',
   },
+  // ==================== 新增短语 ====================
+  // 询问商品信息
+  {
+    id: 'shopping_13',
+    zh: '这是真品吗？',
+    ko: '이거 정품이에요?',
+    romanization: 'Igeo jeongpumieyo?',
+    category: 'shopping',
+  },
+  {
+    id: 'shopping_14',
+    zh: '这是什么材质的？',
+    ko: '이게 어떤 재질이에요?',
+    romanization: 'Ige eotteon jaejirieyo?',
+    category: 'shopping',
+  },
+  {
+    id: 'shopping_15',
+    zh: '可以洗吗？',
+    ko: '세탁돼나요?',
+    romanization: 'Setakdwaenayo?',
+    category: 'shopping',
+  },
+  {
+    id: 'shopping_16',
+    zh: '有保修吗？',
+    ko: '보증 있나요?',
+    romanization: 'Bojeung innayo?',
+    category: 'shopping',
+  },
+  {
+    id: 'shopping_17',
+    zh: '什么时候到期？',
+    ko: '언제까지예요?',
+    romanization: 'Eonjekkajeyeyo?',
+    category: 'shopping',
+  },
+  // 讲价和折扣
+  {
+    id: 'shopping_18',
+    zh: '可以给个折扣吗？',
+    ko: '더 깎아 주실 수 있나요?',
+    romanization: 'Deo ggaka jusil su innayo?',
+    category: 'shopping',
+  },
+  {
+    id: 'shopping_19',
+    zh: '这是最低价吗？',
+    ko: '이게 제일 싼 거예요?',
+    romanization: 'Ige jeil ssan geoyeo?',
+    category: 'shopping',
+  },
+  {
+    id: 'shopping_20',
+    zh: '还有其他优惠吗？',
+    ko: '다른 혜택 없나요?',
+    romanization: 'Dareun hyeotaek eomnayo?',
+    category: 'shopping',
+  },
+  {
+    id: 'shopping_21',
+    zh: '买两个有折扣吗？',
+    ko: '2개 사면 할인돼요?',
+    romanization: '2gae samyeon halindwaeyo?',
+    category: 'shopping',
+  },
+  {
+    id: 'shopping_22',
+    zh: '可以用优惠券吗？',
+    ko: '쿠폰 쓸 수 있나요?',
+    romanization: 'Kupon ssul su innayo?',
+    category: 'shopping',
+  },
+  // 退换货
+  {
+    id: 'shopping_23',
+    zh: '可以换货吗？',
+    ko: '교환할 수 있나요?',
+    romanization: 'Gyohwanhal su innayo?',
+    category: 'shopping',
+  },
+  {
+    id: 'shopping_24',
+    zh: '退换货期限是几天？',
+    ko: '교환 기간 며칠이에요?',
+    romanization: 'Gyohwan gigan myeochilieyo?',
+    category: 'shopping',
+  },
+  {
+    id: 'shopping_25',
+    zh: '我想退货',
+    ko: '반품하고 싶어요',
+    romanization: 'Banpumago sipeoyo',
+    category: 'shopping',
+  },
+  {
+    id: 'shopping_26',
+    zh: '可以换成别的颜色吗？',
+    ko: '다른 색으로 바꿀 수 있나요?',
+    romanization: 'Dareun saegeuro bakkwal su innayo?',
+    category: 'shopping',
+  },
+  // 配送和包装
+  {
+    id: 'shopping_27',
+    zh: '可以送货吗？',
+    ko: '배송해 주실 수 있나요?',
+    romanization: 'Baesonghae jusil su innayo?',
+    category: 'shopping',
+  },
+  {
+    id: 'shopping_28',
+    zh: '需要额外费用吗？',
+    ko: '추가 비용 드나요?',
+    romanization: 'Chuga biyong deunayo?',
+    category: 'shopping',
+  },
+  {
+    id: 'shopping_29',
+    zh: '可以送礼物包装吗？',
+    ko: '선물 포장해 주세요',
+    romanization: 'Seonmul pojanghae juseyo',
+    category: 'shopping',
+  },
+  // 会员和积分
+  {
+    id: 'shopping_30',
+    zh: '有会员卡吗？',
+    ko: '회원카드 있나요?',
+    romanization: 'Hoewonkadeu innayo?',
+    category: 'shopping',
+  },
 ];
 
 /**
- * 交通短语 (10 句)
+ * 交通短语 (30 句)
+ * 包含：问路导航、买票充值、交通方式、换乘转车、交通卡等场景
  */
 const TRANSPORTATION_PHRASES: Phrase[] = [
   {
@@ -323,10 +604,157 @@ const TRANSPORTATION_PHRASES: Phrase[] = [
     romanization: 'Jido innayo?',
     category: 'transportation',
   },
+  // ==================== 新增短语 ====================
+  // 问路和导航
+  {
+    id: 'transportation_11',
+    zh: '请问去...怎么走？',
+    ko: '...怎么 가는지 알려주세요',
+    romanization: '...eotteon ganeunji alryeojuseyo',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_12',
+    zh: '这里在地图上的哪里？',
+    ko: '지도상에서 어디예요?',
+    romanization: 'Jidosangeseo eodiyeyo?',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_13',
+    zh: '我迷路了',
+    ko: '길 잃었어요',
+    romanization: 'Gil ireosseoyo',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_14',
+    zh: '这附近有...吗？',
+    ko: '이 근처에 ... 있나요?',
+    romanization: 'I geuncheoe ... innayo?',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_15',
+    zh: '往左还是往右？',
+    ko: '왼쪽이에요? 오른쪽이에요?',
+    romanization: 'Wenjog ieyo? Oreunjog ieyo?',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_16',
+    zh: '需要走多久？',
+    ko: '걸어서 얼마나 걸려요?',
+    romanization: 'Georeseo eolmana geollyeoyo?',
+    category: 'transportation',
+  },
+  // 买票和充值
+  {
+    id: 'transportation_17',
+    zh: '我要买一张票',
+    ko: '티켓 한 장 주세요',
+    romanization: 'Tiket han jang juseyo',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_18',
+    zh: '往返票多少钱？',
+    ko: '왕복 티켓 얼마예요?',
+    romanization: 'Wangbok tiket eolmayeyo?',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_19',
+    zh: '我要充值交通卡',
+    ko: '교통카드 충전해 주세요',
+    romanization: 'Gyotongkadeu chungchonhae juseyo',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_20',
+    zh: '这张票可以用几次？',
+    ko: '이 티켓 몇 번 쓸 수 있나요?',
+    romanization: 'I tiket myeot beon ssul su innayo?',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_21',
+    zh: '一天票多少钱？',
+    ko: '1일권 얼마예요?',
+    romanization: '1ilgwon eolmayeyo?',
+    category: 'transportation',
+  },
+  // 交通方式询问
+  {
+    id: 'transportation_22',
+    zh: '有公交吗？',
+    ko: '버스 있나요?',
+    romanization: 'Beoseu innayo?',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_23',
+    zh: '可以打车吗？',
+    ko: '택시 탈 수 있나요?',
+    romanization: 'Taeksi tal su innayo?',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_24',
+    zh: '坐地铁快还是打车快？',
+    ko: '지하철이 빨라요? 택시가 빨라요?',
+    romanization: 'Jihacheori ppallayo? Taeksiga ppallayo?',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_25',
+    zh: '需要换乘吗？',
+    ko: '환승해야 하나요?',
+    romanization: 'Hwanseunghaeya hanayo?',
+    category: 'transportation',
+  },
+  // 换乘和转车
+  {
+    id: 'transportation_26',
+    zh: '我应该坐哪辆车？',
+    ko: '어떤 버스 타야 돼요?',
+    romanization: 'Eotteon beoseu taya dwaeyo?',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_27',
+    zh: '这班车到...吗？',
+    ko: '이 버스 ... 가요?',
+    romanization: 'I beoseu ... gayo?',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_28',
+    zh: '错过站了怎么办？',
+    ko: '역을 지나치면 어떻게 해요?',
+    romanization: 'Yeogeul jinachimyeon eotteoke haeyo?',
+    category: 'transportation',
+  },
+  // 交通卡问题
+  {
+    id: 'transportation_29',
+    zh: '交通卡余额不足',
+    ko: '교통카드 잔액 부족해요',
+    romanization: 'Gyotongkadeu janeog bujokhaeyo',
+    category: 'transportation',
+  },
+  {
+    id: 'transportation_30',
+    zh: '在哪里充值？',
+    ko: '어디서 충전할 수 있나요?',
+    romanization: 'Eodiseo chungchonhal su innayo?',
+    category: 'transportation',
+  },
 ];
 
 /**
- * 紧急短语 (8 句)
+ * 紧急短语 (25 句)
+ * 包含：医疗急救、丢失物品、警察报案、使馆联系、紧急情况等场景
  */
 const EMERGENCY_PHRASES: Phrase[] = [
   {
@@ -385,10 +813,136 @@ const EMERGENCY_PHRASES: Phrase[] = [
     romanization: 'Junguggeo hal su innayo?',
     category: 'emergency',
   },
+  // ==================== 新增短语 ====================
+  // 医疗急救
+  {
+    id: 'emergency_09',
+    zh: '叫救护车',
+    ko: '구급차 불러주세요',
+    romanization: 'Gupgeucha bulleojuseyo',
+    category: 'emergency',
+  },
+  {
+    id: 'emergency_10',
+    zh: '我肚子疼',
+    ko: '배가 아파요',
+    romanization: 'Bega apayo',
+    category: 'emergency',
+  },
+  {
+    id: 'emergency_11',
+    zh: '我头痛',
+    ko: '머리가 아파요',
+    romanization: 'Meoriga apayo',
+    category: 'emergency',
+  },
+  {
+    id: 'emergency_12',
+    zh: '我有心脏病',
+    ko: '심장병 있어요',
+    romanization: 'Simjangbyeong isseoyo',
+    category: 'emergency',
+  },
+  {
+    id: 'emergency_13',
+    zh: '我对...过敏',
+    ko: '...에 알레르기 있어요',
+    romanization: '...e allereugi isseoyo',
+    category: 'emergency',
+  },
+  // 丢失物品
+  {
+    id: 'emergency_14',
+    zh: '我手机丢了',
+    ko: '휴대폰 잃어버렸어요',
+    romanization: 'Hyudaepon ireobeoryeosseoyo',
+    category: 'emergency',
+  },
+  {
+    id: 'emergency_15',
+    zh: '我护照丢了',
+    ko: '여권 잃어버렸어요',
+    romanization: 'Yeogwon ireobeoryeosseoyo',
+    category: 'emergency',
+  },
+  {
+    id: 'emergency_16',
+    zh: '行李丢了',
+    ko: '짐을 잃어버렸어요',
+    romanization: 'Jimeul ireobeoryeosseoyo',
+    category: 'emergency',
+  },
+  {
+    id: 'emergency_17',
+    zh: '在哪里可以报案？',
+    ko: '어디서 신고할 수 있나요?',
+    romanization: 'Eodiseo singohal su innayo?',
+    category: 'emergency',
+  },
+  // 警察报案
+  {
+    id: 'emergency_18',
+    zh: '我被偷了',
+    ko: '도둑맞았어요',
+    romanization: 'Dodukmatasseoyo',
+    category: 'emergency',
+  },
+  {
+    id: 'emergency_19',
+    zh: '我被抢劫了',
+    ko: '강도를 당했어요',
+    romanization: 'Gangdoreul danghaesseoyo',
+    category: 'emergency',
+  },
+  {
+    id: 'emergency_20',
+    zh: '我要报警',
+    ko: '경찰에 신고할게요',
+    romanization: 'Gyeongchale singohalgeyo',
+    category: 'emergency',
+  },
+  {
+    id: 'emergency_21',
+    zh: '派出所怎么走？',
+    ko: '파출소 어떻게 가요?',
+    romanization: 'Pachulso eotteoke gayo?',
+    category: 'emergency',
+  },
+  // 使馆联系
+  {
+    id: 'emergency_22',
+    zh: '中国大使馆电话',
+    ko: '중국 대사관 전화번호',
+    romanization: 'Jungguk daesagwan jeonhwabeo',
+    category: 'emergency',
+  },
+  {
+    id: 'emergency_23',
+    zh: '需要翻译',
+    ko: '번역사 필요해요',
+    romanization: 'Beonyeoksa piryohaeyo',
+    category: 'emergency',
+  },
+  // 其他紧急情况
+  {
+    id: 'emergency_24',
+    zh: '着火了！',
+    ko: '불이야!',
+    romanization: 'Buriya!',
+    category: 'emergency',
+  },
+  {
+    id: 'emergency_25',
+    zh: '请快一点',
+    ko: '빨리 좀 해주세요',
+    romanization: 'Ppalli jom haejuseyo',
+    category: 'emergency',
+  },
 ];
 
 /**
- * 住宿短语 (10 句)
+ * 住宿短语 (30 句)
+ * 包含：入住退房、房间服务、维修投诉、延长住宿、邻居噪音等场景
  */
 const ACCOMMODATION_PHRASES: Phrase[] = [
   {
@@ -461,10 +1015,157 @@ const ACCOMMODATION_PHRASES: Phrase[] = [
     romanization: 'Setak seobiseu innayo?',
     category: 'accommodation',
   },
+  // ==================== 新增短语 ====================
+  // 入住和退房
+  {
+    id: 'accommodation_11',
+    zh: '我要办理入住',
+    ko: '체크인할게요',
+    romanization: 'Cheukeuinhageyo',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_12',
+    zh: '请给我房卡',
+    ko: '키주세요',
+    romanization: 'Ki juseyo',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_13',
+    zh: '需要押金吗？',
+    ko: '보증금 필요해요?',
+    romanization: 'Bojeumgeum piryohaeyo?',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_14',
+    zh: '房间在几楼？',
+    ko: '방이 몇 층이에요?',
+    romanization: 'Bangi myeot cheungieyo?',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_15',
+    zh: '电梯在哪里？',
+    ko: '엘리베이터 어디예요?',
+    romanization: 'Ellibeiteo eodiyeyo?',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_16',
+    zh: '我要退房',
+    ko: '체크아웃할게요',
+    romanization: 'Chekeuauteuhageyo',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_17',
+    zh: '账单请给我',
+    ko: '계산서 주세요',
+    romanization: 'Gyesanseo juseyo',
+    category: 'accommodation',
+  },
+  // 房间服务和设施
+  {
+    id: 'accommodation_18',
+    zh: '可以要更多毛巾吗？',
+    ko: '수건 더 주실 수 있나요?',
+    romanization: 'Sugeon deo jusil su innayo?',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_19',
+    zh: '有吹风机吗？',
+    ko: '드라이어 있나요?',
+    romanization: 'Deuraieo innayo?',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_20',
+    zh: '热水不热',
+    ko: '뜨거운 물 안 나와요',
+    romanization: 'Tteugeon mul an nawayo',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_21',
+    zh: '没电了',
+    ko: '전기 안 들어와요',
+    romanization: 'Jeonji an deureowayo',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_22',
+    zh: 'WiFi密码是什么？',
+    ko: '와이파이 비밀번호 뭐예요?',
+    romanization: 'Waipai bimilbeonseo mwoyeyo?',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_23',
+    zh: '可以叫醒服务吗？',
+    ko: '모닝콜 해주세요',
+    romanization: 'Moningkol haejuseyo',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_24',
+    zh: '有叫餐服务吗？',
+    ko: '룸서비스 있나요?',
+    romanization: 'Roomseobiseu innayo?',
+    category: 'accommodation',
+  },
+  // 维修和投诉
+  {
+    id: 'accommodation_25',
+    zh: '马桶坏了',
+    ko: '화장실 고장 났어요',
+    romanization: 'Hwangsiril gojang nasseoyo',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_26',
+    zh: '门锁不好用',
+    ko: '문 잠금 잘 안 돼요',
+    romanization: 'Mun jamgeum jal an dwaeyo',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_27',
+    zh: '房间不干净',
+    ko: '방이 더러워요',
+    romanization: 'Bangi deoreowoyo',
+    category: 'accommodation',
+  },
+  // 延长住宿
+  {
+    id: 'accommodation_28',
+    zh: '我想再住一晚',
+    ko: '하루 더 묵고 싶어요',
+    romanization: 'Haru deo mukgo sipeoyo',
+    category: 'accommodation',
+  },
+  {
+    id: 'accommodation_29',
+    zh: '有空房吗？',
+    ko: '빈 방 있나요?',
+    romanization: 'Bin bang innayo?',
+    category: 'accommodation',
+  },
+  // 其他
+  {
+    id: 'accommodation_30',
+    zh: '可以寄存行李吗？',
+    ko: '짐 맡길 수 있나요?',
+    romanization: 'Jim matggil su innayo?',
+    category: 'accommodation',
+  },
 ];
 
 /**
- * 问候短语 (10 句)
+ * 问候短语 (25 句)
+ * 包含：日常问候、礼貌用语、感谢道歉、道别祝福、闲聊话题等场景
  */
 const GREETING_PHRASES: Phrase[] = [
   {
@@ -535,6 +1236,117 @@ const GREETING_PHRASES: Phrase[] = [
     zh: '不太明白',
     ko: '잘 모르겠어요',
     romanization: 'Jal moreugesseoyo',
+    category: 'greeting',
+  },
+  // ==================== 新增短语 ====================
+  // 日常问候
+  {
+    id: 'greeting_11',
+    zh: '早上好',
+    ko: '좋은 아침이에요',
+    romanization: 'Joeun achimieyo',
+    category: 'greeting',
+  },
+  {
+    id: 'greeting_12',
+    zh: '晚上好',
+    ko: '좋은 저녁이에요',
+    romanization: 'Joeun jeonyeogieyo',
+    category: 'greeting',
+  },
+  {
+    id: 'greeting_13',
+    zh: '晚安',
+    ko: '안녕히 주무세요',
+    romanization: 'Annyeonghi jumuseyo',
+    category: 'greeting',
+  },
+  // 礼貌用语
+  {
+    id: 'greeting_14',
+    zh: '不好意思',
+    ko: '죄송해요',
+    romanization: 'Joesonghaeyo',
+    category: 'greeting',
+  },
+  {
+    id: 'greeting_15',
+    zh: '麻烦你了',
+    ko: '번거로워드려서 죄송해요',
+    romanization: 'Beongeoroweodyeureoseo joesonghaeyo',
+    category: 'greeting',
+  },
+  {
+    id: 'greeting_16',
+    zh: '请稍等',
+    ko: '잠시만요',
+    romanization: 'Jamsimanyo',
+    category: 'greeting',
+  },
+  {
+    id: 'greeting_17',
+    zh: '请慢用',
+    ko: '맛있게 드세요',
+    romanization: 'Masseoge deuseyo',
+    category: 'greeting',
+  },
+  // 感谢和道歉
+  {
+    id: 'greeting_18',
+    zh: '非常感谢',
+    ko: '대단히 감사합니다',
+    romanization: 'Daedanhi gamsahamnida',
+    category: 'greeting',
+  },
+  {
+    id: 'greeting_19',
+    zh: '没关系',
+    ko: '별말씀을요',
+    romanization: 'Byeomalsseumeulyo',
+    category: 'greeting',
+  },
+  {
+    id: 'greeting_20',
+    zh: '我明白了',
+    ko: '알겠습니다',
+    romanization: 'Algetseumnida',
+    category: 'greeting',
+  },
+  {
+    id: 'greeting_21',
+    zh: '没关系',
+    ko: '괜찮습니다',
+    romanization: 'Gwaenchamseumnida',
+    category: 'greeting',
+  },
+  // 道别和祝福
+  {
+    id: 'greeting_22',
+    zh: '祝你今天愉快',
+    ko: '좋은 하루 보내세요',
+    romanization: 'Joeun haru bonaeseyo',
+    category: 'greeting',
+  },
+  {
+    id: 'greeting_23',
+    zh: '旅途愉快',
+    ko: '즐거운 여행 되세요',
+    romanization: 'Jeulgeoun yeohaeng doeseyo',
+    category: 'greeting',
+  },
+  // 闲聊话题
+  {
+    id: 'greeting_24',
+    zh: '今天天气真好',
+    ko: '오늘 날씨 좋네요',
+    romanization: 'Oneul nalssi johneyo',
+    category: 'greeting',
+  },
+  {
+    id: 'greeting_25',
+    zh: '从哪里来？',
+    ko: '어디서 오셨어요?',
+    romanization: 'Eodiseo osyeosseoyo?',
     category: 'greeting',
   },
 ];
