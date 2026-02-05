@@ -1,5 +1,5 @@
 /**
- * 翻译服务 - 整合离线短语库和 Google API
+ * 翻译服务 - 整合离线短语库和 DeepSeek API
  *
  * 核心功能：
  * - 智能路由：优先使用离线短语库，降级到 API
@@ -14,7 +14,7 @@
 
 import type { Language, TranslationResult, TranslationHistory, Phrase } from '@/types/translation';
 import { fuzzyMatch, initPhraseIndex } from '@/utils/textMatcher';
-import { translateText as googleTranslate, clearTranslationCache } from '@/utils/googleTranslate';
+import { translateText as deepseekTranslate, clearTranslationCache } from '@/utils/deepseekTranslate';
 import { ALL_PHRASES } from '@/data/phraseLibrary';
 
 /**
@@ -70,7 +70,7 @@ const searchOfflinePhrases = (text: string, sourceLang: Language): Phrase | null
 };
 
 /**
- * 调用 Google Translate API
+ * 调用 DeepSeek Translate API
  *
  * @param text 要翻译的文本
  * @param sourceLang 源语言
@@ -78,13 +78,13 @@ const searchOfflinePhrases = (text: string, sourceLang: Language): Phrase | null
  * @returns 翻译结果
  * @throws Error 当 API 调用失败时
  */
-const callGoogleTranslate = async (
+const callDeepSeekTranslate = async (
   text: string,
   sourceLang: Language,
   targetLang: Language
 ): Promise<TranslationResult> => {
   try {
-    return await googleTranslate(text, sourceLang, targetLang);
+    return await deepseekTranslate(text, sourceLang, targetLang);
   } catch (error) {
     // 重新抛出错误，由上层处理
     throw error;
@@ -262,7 +262,7 @@ const setMaxHistorySize = (size: number): void => {
  * 智能路由策略：
  * 1. 首先搜索离线短语库
  * 2. 如果匹配度 > 0.8，直接返回离线结果
- * 3. 否则调用 Google Translate API
+ * 3. 否则调用 DeepSeek Translate API
  * 4. 保存翻译历史到 LocalStorage
  * 5. 返回翻译结果
  *
@@ -314,9 +314,9 @@ export const translateText = async (
     };
   }
 
-  // 策略 2：调用 Google API
+  // 策略 2：调用 DeepSeek API
   try {
-    const result = await callGoogleTranslate(trimmedText, sourceLang, targetLang);
+    const result = await callDeepSeekTranslate(trimmedText, sourceLang, targetLang);
 
     // 保存到历史
     saveToHistory(
