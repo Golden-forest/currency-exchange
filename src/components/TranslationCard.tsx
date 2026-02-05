@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
-import { speak, isSpeechSynthesisSupported } from '@/services/ttsService';
+import { speak, isSpeechSynthesisSupported, preloadVoices } from '@/services/ttsService';
 import { extractText, getOCRErrorMessage } from '@/services/ocrService';
 import { LANGUAGE_NAMES } from '@/types/translation';
 import { debounce } from '@/utils/debounce';
@@ -29,6 +29,14 @@ import { TOAST_DURATION } from '@/constants/modal';
  * - 快捷短语动态加载（显示最常用的 2 个）
  */
 export function TranslationCard() {
+  // ===== 语音预热 =====
+  // 在组件挂载时预加载语音列表，确保首次播放时语音已就绪
+  useEffect(() => {
+    if (isSpeechSynthesisSupported()) {
+      preloadVoices();
+    }
+  }, []);
+
   // ===== 状态管理 =====
 
   const {
@@ -661,7 +669,7 @@ export function TranslationCard() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleQuickPhrase(phrase)}
-              className="bg-white/90 rounded-[2.5rem] p-3 flex items-center shadow-soft-out-sm flex-shrink-0 min-w-[200px] border border-white cursor-pointer"
+              className="bg-white/90 rounded-[2.5rem] p-3 flex items-center shadow-soft-out-sm flex-shrink-0 min-w-[140px] border border-white cursor-pointer"
             >
               <div className="text-[#1ABC9C] text-[10px] mr-2.5">▶</div>
               <div>
@@ -706,13 +714,13 @@ export function TranslationCard() {
 
       {/* Text Input Card */}
       <div className="px-1 mb-4">
-        <div className="bg-white rounded-[2.5rem] p-5 sm:p-6 shadow-soft-out-sm relative min-h-[120px]">
+        <div className="bg-white rounded-[2.5rem] p-4 sm:p-5 shadow-soft-out-sm relative min-h-[100px]">
           <textarea
             value={inputValue}
             onChange={handleInputChange}
             placeholder="请输入要翻译的文本..."
-            className="w-full h-full resize-none bg-transparent text-2xl sm:text-3xl font-extrabold text-[#2D3436] leading-snug focus:outline-none placeholder:text-[#CBD5E1]"
-            rows={3}
+            className="w-full h-full resize-none bg-transparent text-xl sm:text-2xl font-extrabold text-[#2D3436] leading-snug focus:outline-none placeholder:text-[#CBD5E1]"
+            rows={2}
             disabled={isLoading}
           />
         </div>
@@ -720,13 +728,13 @@ export function TranslationCard() {
 
       {/* Result Card */}
       <div className="px-1 mb-4 flex-1">
-        <div className="bg-white/90 rounded-[2.5rem] p-5 sm:p-6 shadow-soft-out-lg border border-white h-full">
+        <div className="bg-white/90 rounded-[2.5rem] p-4 sm:p-5 shadow-soft-out-lg border border-white h-full">
           {renderResult()}
         </div>
       </div>
 
       {/* Bottom Controls */}
-      <div className="flex justify-between items-center px-6 pb-2">
+      <div className="flex justify-between items-center px-6 pb-4">
         {/* Type 按钮 */}
         <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
           <div className="w-12 h-12 bg-white rounded-2xl shadow-soft-out-sm flex items-center justify-center text-[#94A3B8] border border-gray-50 group-active:shadow-soft-in">

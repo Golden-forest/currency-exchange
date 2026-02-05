@@ -31,6 +31,22 @@ const DEFAULT_CONFIG: TtsConfig = {
 };
 
 /**
+ * 针对不同语言的优化配置
+ */
+const LANGUAGE_OPTIMIZED_CONFIG: Record<Language, TtsConfig> = {
+  zh: {
+    rate: 1.0,   // 中文正常语速
+    pitch: 1.0,  // 正常音调
+    volume: 1.0,
+  },
+  ko: {
+    rate: 0.9,   // 韩语稍慢一点，更清晰自然
+    pitch: 1.0,  // 正常音调
+    volume: 1.0,
+  },
+};
+
+/**
  * 语言代码映射
  */
 const LANGUAGE_CODE_MAP: Record<Language, string> = {
@@ -100,11 +116,20 @@ export const speak = (
     // 设置语言
     utterance.lang = LANGUAGE_CODE_MAP[lang];
 
-    // 应用配置
-    const finalConfig = { ...DEFAULT_CONFIG, ...config };
+    // 应用针对该语言的优化配置
+    const optimizedConfig = LANGUAGE_OPTIMIZED_CONFIG[lang];
+    const finalConfig = { ...optimizedConfig, ...config };
+
     utterance.rate = finalConfig.rate || 1.0;
     utterance.pitch = finalConfig.pitch || 1.0;
     utterance.volume = finalConfig.volume || 1.0;
+
+    // 智能选择最佳语音
+    const bestVoice = getBestVoice(lang);
+    if (bestVoice) {
+      utterance.voice = bestVoice;
+      console.log(`使用语音: ${bestVoice.name} (${bestVoice.lang})`);
+    }
 
     // 监听事件
     utterance.onend = () => {
@@ -140,6 +165,37 @@ export const getAvailableVoices = (language?: Language): SpeechSynthesisVoice[] 
 
   const langCode = LANGUAGE_CODE_MAP[language];
   return voices.filter(voice => voice.lang.startsWith(langCode));
+};
+
+/**
+ * 获取最佳语音（针对特定语言优化）
+ *
+ * @param language 语言
+ * @returns 最佳语音，如果没有则返回 undefined
+ */
+export const getBestVoice = (language: Language): SpeechSynthesisVoice | undefined => {
+  if (!isSpeechSynthesisSupported()) {
+    return undefined;
+  }
+
+  const voices = window.speechSynthesis.getVoices();
+  const langCode = LANGUAGE_CODE_MAP[language];
+
+  // 优先级顺序：
+  // 1. 本地服务的高质量语音
+  // 2. 本地服务的任何语音
+  // 3. 匹配语言的任何语音
+  // 4. 第一个可用语音
+
+  return voices.find(voice =>
+    voice.lang.startsWith(langCode) &&
+    voice.localService &&
+    (voice.name.includes('Google') || voice.name.includes('Natural') || voice.name.includes('Premium'))
+  ) || voices.find(voice =>
+    voice.lang.startsWith(langCode) && voice.localService
+  ) || voices.find(voice =>
+    voice.lang.startsWith(langCode)
+  ) || voices[0];
 };
 
 /**
