@@ -6,66 +6,52 @@
 
 ### 必需配置（翻译功能核心）
 
-1. **Google Translate API 密钥** - 用于复杂句子的在线翻译
+1. **DeepSeek API 密钥** - 用于复杂句子的在线翻译
 2. **HTTPS 环境** - Web Speech API 和 OCR 功能需要安全上下文
 
 ### 可选配置（增强功能）
 
-3. **Korean Romanizer 库** - 用于韩文罗马音转换（当前显示占位符）
+3. **Korean Romanizer 库** - 用于韩文罗马音转换（已集成）
 
 ---
 
-## 1️⃣ Google Translate API 配置
+## 1️⃣ DeepSeek API 配置
 
 ### 为什么需要配置？
 
 翻译功能使用**混合翻译策略**：
 - **80% 场景**：使用离线短语库（无需 API，快速）
-- **20% 场景**：复杂句子需要调用 Google Translate API
+- **20% 场景**：复杂句子需要调用 DeepSeek API
 
 如果不配置 API 密钥：
-- ✅ 离线短语功能仍然可用（65 句常用语）
+- ✅ 离线短语功能仍然可用（175 句常用语）
 - ❌ 复杂句子翻译将失败
 - ⚠️ 会显示配置提示
 
 ### 获取 API 密钥步骤
 
-#### 方法 1：Google Cloud Console（推荐）
+#### 步骤 1：访问 DeepSeek 开放平台
 
-1. **访问 Google Cloud Console**
-   ```
-   https://console.cloud.google.com/
-   ```
+```
+https://platform.deepseek.com/
+```
 
-2. **创建项目**
-   - 点击顶部的项目选择器
-   - 点击"新建项目"
-   - 输入项目名称（如"Currency Exchange Translation"）
-   - 点击"创建"
+#### 步骤 2：注册/登录账号
 
-3. **启用 Cloud Translation API**
-   - 在左侧菜单选择"API 和服务" → "库"
-   - 搜索"Cloud Translation API"
-   - 点击启用
+- 点击右上角"登录"或"注册"
+- 使用手机号或邮箱注册
+- 完成邮箱验证
 
-4. **创建 API 密钥**
-   - 在左侧菜单选择"API 和服务" → "凭据"
-   - 点击"创建凭据" → "API 密钥"
-   - 复制生成的 API 密钥
+#### 步骤 3：创建 API 密钥
 
-5. **限制 API 密钥（推荐）**
-   - 点击刚创建的 API 密钥
-   - 在"应用程序限制"中选择"HTTP 引用站点"
-   - 添加以下引用站点：
-     ```
-     http://localhost:3000
-     http://localhost:3001
-     ```
-   - 在"API 限制"中选择"限制密钥"
-   - 选择"Cloud Translation API"
-   - 点击"保存"
+1. 登录后进入控制台
+2. 点击左侧菜单"API Keys"
+3. 点击"创建新密钥"按钮
+4. 输入密钥名称（如"Currency Exchange"）
+5. 点击"创建"
+6. **重要**: 立即复制密钥（格式: `sk-xxxxx`）
 
-### 配置 API 密钥
+#### 步骤 4：配置到项目
 
 1. **创建环境变量文件**
    ```bash
@@ -76,7 +62,7 @@
 2. **编辑 .env.local 文件**
    ```bash
    # 将 your_api_key_here 替换为你的实际 API 密钥
-   NEXT_PUBLIC_GOOGLE_TRANSLATE_API_KEY=你的实际API密钥
+   NEXT_PUBLIC_DEEPSEEK_API_KEY=sk-你的实际API密钥
    ```
 
 3. **重启开发服务器**
@@ -86,16 +72,19 @@
    npm run dev
    ```
 
-### 免费配额说明
+### 费用说明
 
-Google Translate API 免费版提供：
-- **每月 50 万字符**的翻译配额
-- 超出后按 $20/百万字符收费
+DeepSeek API 定价：
+- **输入**: ¥1/百万 tokens
+- **输出**: ¥2/百万 tokens
 
 **预估使用量**：
 - 离线短语库覆盖 80% 场景，不需要调用 API
-- 假设每天 100 次翻译，每次 10 字符
-- 每月约 30,000 字符（远低于免费配额）
+- 假设每天 100 次在线翻译，每次 20 tokens
+- 每月约 60,000 tokens（输入 40,000 + 输出 20,000）
+- **每月费用**: ¥0.03（约 ¥0.36/年）
+
+**结论**: 成本极低，几乎可以忽略不计。
 
 ---
 
@@ -132,7 +121,7 @@ vercel
 
 # 3. 在 Vercel 控制台配置环境变量
 # Settings → Environment Variables
-# NEXT_PUBLIC_GOOGLE_TRANSLATE_API_KEY
+# NEXT_PUBLIC_DEEPSEEK_API_KEY
 ```
 
 #### 方案 2：Netlify（免费）
@@ -156,50 +145,29 @@ netlify deploy --prod
 
 ---
 
-## 3️⃣ Korean Romanizer 配置（可选）
+## 3️⃣ Korean Romanizer 配置（已完成）
 
 ### 当前状态
 
-韩文罗马音功能当前显示占位符：
+韩文罗马音功能已集成到项目中：
+- ✅ 已安装 `korean-romanizer` 库
+- ✅ 自动为韩文翻译结果生成罗马音
+- ✅ 无需额外配置
+
+### 功能说明
+
+翻译韩文时，系统会自动：
+1. 调用 DeepSeek API 翻译文本
+2. 使用 `korean-romanizer` 库生成罗马音
+3. 在界面显示罗马音（例如：안녕하세요 [annyeonghaseyo]）
+
+### 示例
+
 ```
-[韩文发音: 5 字]
+输入: 你好
+翻译: 안녕하세요
+罗马音: annyeonghaseyo
 ```
-
-### 安装 Korean Romanizer
-
-如果你需要完整的韩文罗马音转换功能：
-
-1. **安装库**
-   ```bash
-   npm install korean-romanizer
-   ```
-
-2. **修改代码**
-
-   **文件**: `src/utils/googleTranslate.ts`
-
-   **找到**: 第 136-157 行的 `extractRomanization` 函数
-
-   **替换为**:
-   ```typescript
-   import { Romanizer } from 'korean-romanizer';
-
-   const extractRomanization = (koreanText: string): string => {
-     if (!koreanText || koreanText.trim().length === 0) {
-       return '';
-     }
-
-     try {
-       const romanizer = new Romanizer();
-       return romanizer.romanize(koreanText);
-     } catch (error) {
-       console.warn('罗马音转换失败:', error);
-       return '';
-     }
-   };
-   ```
-
-3. **重启开发服务器**
 
 ---
 
@@ -215,8 +183,8 @@ netlify deploy --prod
 // 正确配置：无警告
 
 // 未配置：显示警告
-// 警告: Google Translate API 密钥未配置
-// 警告: 请创建 .env.local 文件并添加 NEXT_PUBLIC_GOOGLE_TRANSLATE_API_KEY
+// 警告: DeepSeek API 密钥未配置
+// 警告: 请创建 .env.local 文件并添加 NEXT_PUBLIC_DEEPSEEK_API_KEY
 ```
 
 ### 2. 测试翻译功能
@@ -224,12 +192,17 @@ netlify deploy --prod
 1. **测试离线短语**（无需 API）
    - 输入："你好"
    - 应该立即显示："안녕하세요"
-   - 应该显示罗马音占位符
+   - 应该显示罗马音："annyeonghaseyo"
 
 2. **测试在线翻译**（需要 API）
    - 输入："这个商品的详细信息是什么？"
    - 应该在 1-2 秒后显示翻译结果
    - 如果 API 未配置，会显示错误提示
+
+3. **测试自动语言检测**（新功能）
+   - 输入中文："你好" → 自动翻译成韩文
+   - 输入韩文："안녕하세요" → 自动翻译成中文
+   - 不需要手动切换语言方向
 
 ### 3. 测试语音输入
 
@@ -258,16 +231,26 @@ netlify deploy --prod
 
 ## 🐛 常见问题
 
-### Q1: Google Translate API 配额用完了怎么办？
+### Q1: DeepSeek API 密钥无效？
 
-**症状**: 翻译失败，提示"API 配额已用完"
+**症状**: 翻译失败，提示"API 密钥无效或无权限访问"
 
 **解决方案**:
-1. 升级到付费计划（$20/百万字符）
-2. 或等待下个月配额重置
-3. 或使用离线短语库（80% 场景已覆盖）
+1. 检查 `.env.local` 文件中的 API 密钥格式
+2. 确认密钥以 `sk-` 开头
+3. 登录 DeepSeek 平台检查密钥是否有效
+4. 重启开发服务器
 
-### Q2: 语音识别不工作？
+### Q2: 自动语言检测不准确？
+
+**症状**: 输入中文但被识别为韩文
+
+**解决方案**:
+1. 检查输入文本是否包含韩文字符
+2. 如果混合中韩文，会优先识别为韩文
+3. 这是预期行为，可以手动修正
+
+### Q3: 语音识别不工作？
 
 **可能原因**:
 1. 浏览器不支持（使用 Chrome、Edge 或 Safari）
@@ -279,7 +262,7 @@ netlify deploy --prod
 2. 确认在 localhost 或 HTTPS 环境下
 3. 检查浏览器麦克风权限设置
 
-### Q3: OCR 识别失败？
+### Q4: OCR 识别失败？
 
 **可能原因**:
 1. 图片格式不支持（仅支持 JPEG、PNG、BMP、WebP）
@@ -291,20 +274,35 @@ netlify deploy --prod
 2. 压缩图片大小
 3. 检查网络连接
 
-### Q4: 开发环境变量不生效？
+### Q5: 开发环境变量不生效？
 
 **解决方案**:
 1. 确认文件名是 `.env.local`（不是 `.env.local.example`）
 2. 确认文件在项目根目录
 3. 重启开发服务器（Ctrl+C 然后重新运行 `npm run dev`）
 
+### Q6: 翻译速度慢？
+
+**症状**: 在线翻译需要 3 秒以上
+
+**可能原因**:
+1. 网络连接不稳定
+2. DeepSeek API 服务器负载高
+3. 超时重试机制触发
+
+**解决方案**:
+1. 检查网络连接
+2. 等待 API 服务恢复
+3. 依赖离线短语库（80% 场景）
+
 ---
 
 ## 📚 相关文档
 
-- [Google Cloud Translation API 文档](https://cloud.google.com/translate/docs)
+- [DeepSeek API 官方文档](https://api-docs.deepseek.com/)
 - [Tesseract.js 文档](https://tesseract.projectnaptha.com/)
 - [Web Speech API 文档](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API)
+- [korean-romanizer npm 包](https://www.npmjs.com/package/korean-romanizer)
 
 ---
 
@@ -314,8 +312,8 @@ netlify deploy --prod
 # 1. 复制环境变量文件
 cp .env.local.example .env.local
 
-# 2. 编辑 .env.local，添加 Google Translate API 密钥
-# NEXT_PUBLIC_GOOGLE_TRANSLATE_API_KEY=你的实际API密钥
+# 2. 编辑 .env.local，添加 DeepSeek API 密钥
+# NEXT_PUBLIC_DEEPSEEK_API_KEY=sk-你的实际API密钥
 
 # 3. 启动开发服务器
 npm run dev
@@ -325,3 +323,12 @@ npm run dev
 ```
 
 配置完成后，翻译功能就可以正常使用了！🚀
+
+**主要特性**:
+- ✅ 自动语言检测（无需手动切换）
+- ✅ 离线短语库（175 句常用语）
+- ✅ 在线翻译（DeepSeek API）
+- ✅ 韩文罗马音显示
+- ✅ 语音识别输入
+- ✅ 图片 OCR 识别
+- ✅ 成本极低（约 ¥0.36/年）
