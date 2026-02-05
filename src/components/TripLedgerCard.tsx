@@ -1,14 +1,100 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { TravelerAvatars } from './TripLedgerCard/TravelerAvatars';
+import { SettingsModal } from './TripLedgerCard/SettingsModal';
+import { AddTransactionModal } from './TripLedgerCard/AddTransactionModal';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { groupTransactionsByDate } from '@/utils/tripCalculations';
+import { generateTransactionId } from '@/utils/idGenerator';
+import type { TripSettings, Transaction } from '@/types/trip';
 
 export function TripLedgerCard() {
-    const transactions = [
-        { id: 1, name: 'Gyeongbokgung Ti...', amount: '₩ 12,000', secondary: '¥ 65.20', time: '10:30 AM', icon: '🏯', split: 'Split by 4' },
-        { id: 2, name: 'Street Food Market', amount: '₩ 45,000', secondary: '¥ 244.50', time: '12:15 PM', icon: '🍜', tag: "Sarah's Treat" },
-        { id: 3, name: 'Hanbok Rental', amount: '₩ 60,000', secondary: '¥ 326.00', time: '01:45 PM', icon: '👘', split: 'Split by 2' },
-        { id: 4, name: 'Cafe Onion Anguk', amount: '₩ 11,500', secondary: '¥ 62.50', time: '03:20 PM', icon: '☕' },
-    ];
+    // 状态管理
+    const [settings, setSettings] = useLocalStorage<TripSettings | null>('tripSettings', null);
+    const [transactions, setTransactions] = useLocalStorage<Transaction[]>('tripTransactions', []);
+    const [showSettings, setShowSettings] = useState(false);
+    const [showAddTransaction, setShowAddTransaction] = useState(false);
+    const [showSettlement, setShowSettlement] = useState(false);
+
+    // 计算总支出
+    const totalSpent = transactions.reduce((sum, t) => sum + t.amountKRW, 0);
+
+    // 计算预算使用百分比
+    const budgetPercentage = settings ? (totalSpent / settings.totalBudget) * 100 : 0;
+
+    // 计算剩余预算
+    const remainingBudget = settings ? settings.totalBudget - totalSpent : 0;
+
+    // 生成分组交易(按日期)
+    const groupedTransactions = useMemo(() => {
+        return groupTransactionsByDate(transactions);
+    }, [transactions]);
+
+    // 格式化金额
+    const formatKRW = (amount: number) => {
+        return new Intl.NumberFormat('ko-KR', {
+            style: 'currency',
+            currency: 'KRW',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(amount);
+    };
+
+    const formatCNY = (amount: number) => {
+        return new Intl.NumberFormat('zh-CN', {
+            style: 'currency',
+            currency: 'CNY',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(amount);
+    };
+
+    // 格式化时间
+    const formatTime = (timestamp: number) => {
+        return new Date(timestamp).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+        });
+    };
+
+    // 格式化日期
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        if (dateString === today.toISOString().split('T')[0]) {
+            return 'TODAY';
+        } else if (dateString === yesterday.toISOString().split('T')[0]) {
+            return 'YESTERDAY';
+        } else {
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+            }).toUpperCase();
+        }
+    };
+
+    // 处理设置保存
+    const handleSaveSettings = (newSettings: TripSettings) => {
+        setSettings(newSettings);
+    };
+
+    // 添加交易
+    const handleAddTransaction = (data: Omit<Transaction, 'id' | 'timestamp' | 'date'>) => {
+        const newTransaction: Transaction = {
+            ...data,
+            id: generateTransactionId(),
+            timestamp: Date.now(),
+            date: new Date().toISOString().split('T')[0],
+        };
+        setTransactions([...transactions, newTransaction]);
+        setShowAddTransaction(false);
+    };
 
     return (
         <div className="w-full max-w-lg bg-gradient-to-br from-[#FFF5F5] to-[#FFE4E1] rounded-[3rem] sm:rounded-[4rem] p-6 sm:p-8 shadow-soft-out-lg relative overflow-hidden h-full flex flex-col">
@@ -18,6 +104,7 @@ export function TripLedgerCard() {
                     Road to Freedom
                 </h2>
             </div>
+
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
                 <div>
@@ -26,10 +113,13 @@ export function TripLedgerCard() {
                         <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                         </svg>
-                        <span className="text-sm font-medium">Seoul, South Korea</span>
+                        <span className="text-sm font-medium">{settings?.location || '请设置地点'}</span>
                     </div>
                 </div>
-                <button className="p-2 bg-white rounded-full shadow-soft-out-sm text-[#636E72]">
+                <button
+                    onClick={() => setShowSettings(true)}
+                    className="p-2 bg-white rounded-full shadow-soft-out-sm text-[#636E72] hover:text-[#FF6B81] transition-colors"
+                >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -44,63 +134,138 @@ export function TripLedgerCard() {
                 </div>
                 <div className="text-sm font-medium opacity-60 mb-2">TOTAL SPENT</div>
                 <div className="text-3xl font-bold mb-4">
-                    ₩ 1,245,000 <span className="opacity-40 text-lg">/ 2M</span>
+                    {formatKRW(totalSpent)}{' '}
+                    {settings && <span className="opacity-40 text-lg">/ {formatKRW(settings.totalBudget)}</span>}
                 </div>
 
                 {/* Progress Bar */}
                 <div className="h-2 w-full bg-white/20 rounded-full mb-2">
-                    <div className="h-full bg-gradient-to-r from-[#FF6B81] to-[#F7D794] rounded-full" style={{ width: '62%' }} />
+                    <div
+                        className="h-full bg-gradient-to-r from-[#FF6B81] to-[#F7D794] rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(budgetPercentage, 100)}%` }}
+                    />
                 </div>
                 <div className="flex justify-between text-[10px] font-bold opacity-60">
-                    <span>62% used</span>
-                    <span>₩ 755,000 left</span>
+                    <span>{budgetPercentage.toFixed(0)}% used</span>
+                    <span>{settings && formatKRW(remainingBudget)} left</span>
                 </div>
             </div>
+
+            {/* Traveler Avatars */}
+            {settings && settings.travelers.length > 0 && (
+                <div className="mb-6">
+                    <TravelerAvatars travelers={settings.travelers} />
+                </div>
+            )}
 
             {/* Transaction List */}
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                <div className="flex justify-between items-center mb-4">
-                    <span className="text-[10px] font-bold text-[#A4B0BE] tracking-widest uppercase">TODAY, OCT 24</span>
-                    <span className="text-[10px] font-bold text-[#A4B0BE]">₩ 128,500</span>
-                </div>
+                {!settings ? (
+                    // 首次使用提示
+                    <div className="text-center py-12">
+                        <div className="text-6xl mb-4">✈️</div>
+                        <h3 className="text-lg font-bold text-[#2D3436] mb-2">开始您的旅行</h3>
+                        <p className="text-sm text-[#636E72] mb-6">点击右上角设置按钮配置您的旅行信息</p>
+                        <button
+                            onClick={() => setShowSettings(true)}
+                            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#FF6B81] to-[#FF9FF3] text-white font-bold text-sm shadow-lg hover:shadow-xl active:scale-95 transition-all"
+                        >
+                            设置旅行
+                        </button>
+                    </div>
+                ) : groupedTransactions.length === 0 ? (
+                    // 无交易记录提示
+                    <div className="text-center py-12">
+                        <div className="text-6xl mb-4">💰</div>
+                        <h3 className="text-lg font-bold text-[#2D3436] mb-2">暂无交易记录</h3>
+                        <p className="text-sm text-[#636E72]">点击右下角的"+"按钮添加您的第一笔消费</p>
+                    </div>
+                ) : (
+                    // 显示交易列表
+                    <div className="space-y-6">
+                        {groupedTransactions.map((group) => (
+                            <div key={group.date}>
+                                {/* 日期标题 */}
+                                <div className="flex justify-between items-center mb-4">
+                                    <span className="text-[10px] font-bold text-[#A4B0BE] tracking-widest uppercase">
+                                        {formatDate(group.date)}, {new Date(group.date).getDate()}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-[#A4B0BE]">
+                                        {formatCNY(group.totalAmount)}
+                                    </span>
+                                </div>
 
-                <div className="space-y-3">
-                    {transactions.map((t) => (
-                        <div key={t.id} className="bg-white rounded-[2rem] p-4 flex items-center shadow-soft-out-sm border border-white/50">
-                            <div className="w-12 h-12 bg-[#F1F2F6] rounded-full flex items-center justify-center text-2xl mr-4">
-                                {t.icon}
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex justify-between items-start">
-                                    <h3 className="font-bold text-[#2D3436] text-sm">{t.name}</h3>
-                                    <div className="text-right">
-                                        <div className="font-bold text-[#2D3436] text-sm">{t.amount}</div>
-                                        <div className="text-[10px] text-[#A4B0BE]">{t.secondary}</div>
-                                    </div>
+                                {/* 交易列表 */}
+                                <div className="space-y-3">
+                                    {group.transactions.map((t) => (
+                                        <div key={t.id} className="bg-white rounded-[2rem] p-4 flex items-center shadow-soft-out-sm border border-white/50">
+                                            <div className="w-12 h-12 bg-[#F1F2F6] rounded-full flex items-center justify-center text-2xl mr-4">
+                                                {t.icon}
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-start">
+                                                    <h3 className="font-bold text-[#2D3436] text-sm">{t.name}</h3>
+                                                    <div className="text-right">
+                                                        <div className="font-bold text-[#2D3436] text-sm">
+                                                            {formatKRW(t.amountKRW)}
+                                                        </div>
+                                                        <div className="text-[10px] text-[#A4B0BE]">
+                                                            {formatCNY(t.amountCNY)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center mt-1">
+                                                    {t.splitType === 'even' && t.splitAmong && (
+                                                        <span className="text-[9px] bg-[#E3F2FD] text-[#2196F3] px-2 py-0.5 rounded-full font-bold mr-2">
+                                                            Split by {t.splitAmong.length}
+                                                        </span>
+                                                    )}
+                                                    {t.splitType === 'treat' && t.treatedBy && (
+                                                        <span className="text-[9px] bg-[#FFF3E0] text-[#FF9800] px-2 py-0.5 rounded-full font-bold mr-2">
+                                                            {t.treatedBy}'s Treat
+                                                        </span>
+                                                    )}
+                                                    <span className="text-[9px] text-[#CED6E0] font-medium ml-auto">
+                                                        {formatTime(t.timestamp)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="flex items-center mt-1">
-                                    {t.split && (
-                                        <span className="text-[9px] bg-[#E3F2FD] text-[#2196F3] px-2 py-0.5 rounded-full font-bold mr-2">
-                                            {t.split}
-                                        </span>
-                                    )}
-                                    {t.tag && (
-                                        <span className="text-[9px] bg-[#FFF3E0] text-[#FF9800] px-2 py-0.5 rounded-full font-bold mr-2">
-                                            {t.tag}
-                                        </span>
-                                    )}
-                                    <span className="text-[9px] text-[#CED6E0] font-medium ml-auto">{t.time}</span>
-                                </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Add Button */}
-            <button className="absolute bottom-6 right-6 w-16 h-16 bg-gradient-to-tr from-[#FF6B81] to-[#FF9FF3] rounded-full shadow-lg flex items-center justify-center text-white text-4xl font-light active:scale-95 transition-transform">
-                +
-            </button>
+            {settings && (
+                <button
+                    onClick={() => setShowAddTransaction(true)}
+                    className="absolute bottom-6 right-6 w-16 h-16 bg-gradient-to-tr from-[#FF6B81] to-[#FF9FF3] rounded-full shadow-lg flex items-center justify-center text-white text-4xl font-light active:scale-95 transition-transform hover:shadow-xl"
+                >
+                    +
+                </button>
+            )}
+
+            {/* Modals */}
+            {showSettings && (
+                <SettingsModal
+                    settings={settings}
+                    onSave={handleSaveSettings}
+                    onClose={() => setShowSettings(false)}
+                />
+            )}
+
+            {showAddTransaction && settings && (
+                <AddTransactionModal
+                    travelers={settings.travelers}
+                    currentRate={settings.currentRate}
+                    onAdd={handleAddTransaction}
+                    onClose={() => setShowAddTransaction(false)}
+                />
+            )}
         </div>
     );
 }
