@@ -18,3 +18,12 @@ export interface QuickAmount {
   value: number;
   currency: Currency;
 }
+
+// 导出旅行账本相关类型
+export type {
+  TripSettings,
+  SplitType,
+  Transaction,
+  SettlementItem,
+  TransactionsByDate,
+} from './trip';
