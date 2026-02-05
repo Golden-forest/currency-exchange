@@ -1,0 +1,461 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Transaction, SplitType } from '@/types/trip';
+import { exchangeService } from '@/services/exchange';
+
+// 预设的图标选项
+const EMOJI_OPTIONS = [
+  '🍜', '☕', '🍕', '🍔', '🍣', '🥐',
+  '🚕', '🚇', '✈️', '🏨', '🎫', '🛍️',
+  '💊', '🎁', '🎮', '🎬', '📸', '🎵',
+  '💰', '🏧', '🏪', '⛽', '🚩', '📍'
+];
+
+type Props = {
+  travelers: string[];
+  currentRate: number;
+  onAdd: (transaction: Omit<Transaction, 'id' | 'timestamp' | 'date'>) => void;
+  onClose: () => void;
+};
+
+export const AddTransactionModal = React.memo(({
+  travelers,
+  currentRate,
+  onAdd,
+  onClose
+}: Props) => {
+  // 表单状态
+  const [merchantName, setMerchantName] = useState('');
+  const [amountKRW, setAmountKRW] = useState('');
+  const [amountCNY, setAmountCNY] = useState('');
+  const [payer, setPayer] = useState('');
+  const [splitType, setSplitType] = useState<SplitType>('even');
+  const [splitAmong, setSplitAmong] = useState<string[]>([]);
+  const [treatedBy, setTreatedBy] = useState('');
+  const [icon, setIcon] = useState('💰');
+
+  // 验证错误
+  const [errors, setErrors] = useState<{
+    merchantName?: string;
+    amount?: string;
+    payer?: string;
+    splitAmong?: string;
+    treatedBy?: string;
+  }>({});
+
+  // 初始化汇率服务
+  useEffect(() => {
+    if (currentRate && !exchangeService.getCurrentRate()) {
+      exchangeService['currentRate'] = currentRate;
+    }
+  }, [currentRate]);
+
+  // 初始化默认付款人
+  useEffect(() => {
+    if (travelers.length > 0 && !payer) {
+      setPayer(travelers[0]);
+    }
+  }, [travelers, payer]);
+
+  // 初始化默认参与分摊人员
+  useEffect(() => {
+    if (travelers.length > 0 && splitAmong.length === 0) {
+      setSplitAmong(travelers);
+    }
+  }, [travelers]);
+
+  // 初始化默认请客的人
+  useEffect(() => {
+    if (travelers.length > 0 && !treatedBy) {
+      setTreatedBy(travelers[0]);
+    }
+  }, [travelers, treatedBy]);
+
+  // 处理KRW金额变化
+  const handleKRWChange = (value: string) => {
+    setAmountKRW(value);
+
+    // 实时转换CNY
+    const krwAmount = parseFloat(value);
+    if (!isNaN(krwAmount) && krwAmount > 0 && currentRate) {
+      const cnyAmount = exchangeService.krwToCny(krwAmount);
+      setAmountCNY(cnyAmount.toFixed(2));
+      setErrors(prev => ({ ...prev, amount: undefined }));
+    } else {
+      setAmountCNY('');
+    }
+  };
+
+  // 切换参与分摊人员
+  const toggleSplitAmong = (traveler: string) => {
+    setSplitAmong(prev => {
+      if (prev.includes(traveler)) {
+        // 至少保留一个人
+        if (prev.length > 1) {
+          return prev.filter(t => t !== traveler);
+        }
+        return prev;
+      } else {
+        return [...prev, traveler];
+      }
+    });
+    setErrors(prev => ({ ...prev, splitAmong: undefined }));
+  };
+
+  // 验证表单
+  const validateForm = (): boolean => {
+    const newErrors: typeof errors = {};
+
+    // 验证商家名称
+    if (!merchantName.trim()) {
+      newErrors.merchantName = '请输入商家名称';
+    }
+
+    // 验证金额
+    const krwAmount = parseFloat(amountKRW);
+    if (!amountKRW || isNaN(krwAmount) || krwAmount <= 0) {
+      newErrors.amount = '请输入有效的金额';
+    }
+
+    // 验证付款人
+    if (!payer) {
+      newErrors.payer = '请选择付款人';
+    }
+
+    // 验证分摊逻辑
+    if (splitType === 'even') {
+      if (splitAmong.length === 0) {
+        newErrors.splitAmong = '请至少选择1人参与分摊';
+      }
+    } else if (splitType === 'treat') {
+      if (!treatedBy) {
+        newErrors.treatedBy = '请选择请客的人';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // 添加交易
+  const handleAdd = () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    const krwAmount = parseFloat(amountKRW);
+    const cnyAmount = parseFloat(amountCNY);
+
+    const transaction: Omit<Transaction, 'id' | 'timestamp' | 'date'> = {
+      name: merchantName.trim(),
+      amountKRW: krwAmount,
+      amountCNY: cnyAmount,
+      payer,
+      splitType,
+      icon,
+      // 根据分摊类型添加相应字段
+      ...(splitType === 'even' && { splitAmong }),
+      ...(splitType === 'treat' && { treatedBy }),
+    };
+
+    onAdd(transaction);
+  };
+
+  // 处理背景点击关闭
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        onClick={handleBackdropClick}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="bg-white rounded-[3rem] p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto"
+        >
+          {/* 标题 */}
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-[#2D3436] mb-2">
+              添加交易记录
+            </h2>
+            <p className="text-sm text-[#636E72]">
+              记录您的消费信息
+            </p>
+          </div>
+
+          {/* 表单 */}
+          <div className="space-y-6">
+            {/* 图标选择 */}
+            <div>
+              <label className="block text-sm font-bold text-[#2D3436] mb-3">
+                选择图标
+              </label>
+              <div className="grid grid-cols-8 gap-2">
+                {EMOJI_OPTIONS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => setIcon(emoji)}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all ${
+                      icon === emoji
+                        ? 'bg-gradient-to-br from-[#FF6B81] to-[#FF9FF3] shadow-lg scale-110'
+                        : 'bg-[#F0F2F6] hover:bg-[#E9EDF2]'
+                    }`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 商家名称 */}
+            <div>
+              <label className="block text-sm font-bold text-[#2D3436] mb-2">
+                商家名称 <span className="text-[#FF6B81]">*</span>
+              </label>
+              <input
+                type="text"
+                value={merchantName}
+                onChange={(e) => {
+                  setMerchantName(e.target.value);
+                  setErrors(prev => ({ ...prev, merchantName: undefined }));
+                }}
+                placeholder="例如: 明洞饺子"
+                className={`w-full px-4 py-3 rounded-2xl bg-[#F0F2F6] border-2 transition-all ${
+                  errors.merchantName
+                    ? 'border-[#FF6B81] focus:border-[#FF6B81]'
+                    : 'border-transparent focus:border-[#8B5CF6]'
+                } focus:outline-none shadow-soft-in text-sm`}
+              />
+              {errors.merchantName && (
+                <p className="mt-2 text-xs text-[#FF6B81] font-medium">
+                  {errors.merchantName}
+                </p>
+              )}
+            </div>
+
+            {/* 金额 */}
+            <div>
+              <label className="block text-sm font-bold text-[#2D3436] mb-2">
+                金额 (KRW) <span className="text-[#FF6B81]">*</span>
+              </label>
+              <div className="space-y-2">
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={amountKRW}
+                    onChange={(e) => handleKRWChange(e.target.value)}
+                    placeholder="例如: 15000"
+                    className={`w-full px-4 py-3 pl-12 pr-4 rounded-2xl bg-[#F0F2F6] border-2 transition-all ${
+                      errors.amount
+                        ? 'border-[#FF6B81] focus:border-[#FF6B81]'
+                        : 'border-transparent focus:border-[#8B5CF6]'
+                    } focus:outline-none shadow-soft-in text-sm`}
+                  />
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-[#636E72]">
+                    ₩
+                  </span>
+                </div>
+                {amountCNY && (
+                  <div className="px-4 py-2 rounded-xl bg-[#E9EDF2] flex items-center justify-between">
+                    <span className="text-sm text-[#636E72]">≈</span>
+                    <span className="text-sm font-bold text-[#2D3436]">
+                      ¥ {amountCNY} CNY
+                    </span>
+                  </div>
+                )}
+              </div>
+              {errors.amount && (
+                <p className="mt-2 text-xs text-[#FF6B81] font-medium">
+                  {errors.amount}
+                </p>
+              )}
+            </div>
+
+            {/* 付款人 */}
+            <div>
+              <label className="block text-sm font-bold text-[#2D3436] mb-2">
+                付款人 <span className="text-[#FF6B81]">*</span>
+              </label>
+              <select
+                value={payer}
+                onChange={(e) => {
+                  setPayer(e.target.value);
+                  setErrors(prev => ({ ...prev, payer: undefined }));
+                }}
+                className={`w-full px-4 py-3 rounded-2xl bg-[#F0F2F6] border-2 transition-all ${
+                  errors.payer
+                    ? 'border-[#FF6B81] focus:border-[#FF6B81]'
+                    : 'border-transparent focus:border-[#8B5CF6]'
+                } focus:outline-none shadow-soft-in text-sm appearance-none cursor-pointer`}
+              >
+                <option value="">选择付款人</option>
+                {travelers.map((traveler) => (
+                  <option key={traveler} value={traveler}>
+                    {traveler}
+                  </option>
+                ))}
+              </select>
+              {errors.payer && (
+                <p className="mt-2 text-xs text-[#FF6B81] font-medium">
+                  {errors.payer}
+                </p>
+              )}
+            </div>
+
+            {/* 分摊方式 */}
+            <div>
+              <label className="block text-sm font-bold text-[#2D3436] mb-3">
+                分摊方式
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['even', 'treat', 'none'] as SplitType[]).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setSplitType(type)}
+                    className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                      splitType === type
+                        ? 'bg-gradient-to-r from-[#FF6B81] to-[#FF9FF3] text-white shadow-lg'
+                        : 'bg-[#F0F2F6] text-[#636E72] hover:bg-[#E9EDF2]'
+                    }`}
+                  >
+                    {type === 'even' && '平摊'}
+                    {type === 'treat' && '请客'}
+                    {type === 'none' && '不分摊'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 条件渲染: 参与分摊人员 */}
+            {splitType === 'even' && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <label className="block text-sm font-bold text-[#2D3436] mb-3">
+                  参与分摊人员 <span className="text-[#FF6B81]">*</span>
+                </label>
+                <div className="space-y-2">
+                  {travelers.map((traveler) => (
+                    <label
+                      key={traveler}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all ${
+                        splitAmong.includes(traveler)
+                          ? 'bg-gradient-to-r from-[#FF6B81]/20 to-[#FF9FF3]/20 border-2 border-[#FF6B81]'
+                          : 'bg-[#F0F2F6] hover:bg-[#E9EDF2]'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={splitAmong.includes(traveler)}
+                        onChange={() => toggleSplitAmong(traveler)}
+                        className="w-5 h-5 rounded border-2 border-[#636E72] text-[#FF6B81] focus:ring-[#FF6B81]"
+                      />
+                      <span className="text-sm font-bold text-[#2D3436]">
+                        {traveler}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {errors.splitAmong && (
+                  <p className="mt-2 text-xs text-[#FF6B81] font-medium">
+                    {errors.splitAmong}
+                  </p>
+                )}
+              </motion.div>
+            )}
+
+            {/* 条件渲染: 请客的人 */}
+            {splitType === 'treat' && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <label className="block text-sm font-bold text-[#2D3436] mb-2">
+                  请客的人 <span className="text-[#FF6B81]">*</span>
+                </label>
+                <select
+                  value={treatedBy}
+                  onChange={(e) => {
+                    setTreatedBy(e.target.value);
+                    setErrors(prev => ({ ...prev, treatedBy: undefined }));
+                  }}
+                  className={`w-full px-4 py-3 rounded-2xl bg-[#F0F2F6] border-2 transition-all ${
+                    errors.treatedBy
+                      ? 'border-[#FF6B81] focus:border-[#FF6B81]'
+                      : 'border-transparent focus:border-[#8B5CF6]'
+                  } focus:outline-none shadow-soft-in text-sm appearance-none cursor-pointer`}
+                >
+                  <option value="">选择请客的人</option>
+                  {travelers.map((traveler) => (
+                    <option key={traveler} value={traveler}>
+                      {traveler}
+                    </option>
+                  ))}
+                </select>
+                {errors.treatedBy && (
+                  <p className="mt-2 text-xs text-[#FF6B81] font-medium">
+                    {errors.treatedBy}
+                  </p>
+                )}
+              </motion.div>
+            )}
+
+            {/* 条件渲染: 不分摊提示 */}
+            {splitType === 'none' && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="px-4 py-3 rounded-xl bg-[#E9EDF2] text-sm text-[#636E72] text-center"
+              >
+                付款人 {payer} 将独自承担这笔费用
+              </motion.div>
+            )}
+          </div>
+
+          {/* 按钮 */}
+          <div className="flex gap-4 mt-8">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 rounded-2xl bg-[#F0F2F6] text-[#636E72] font-bold text-sm hover:bg-[#E9EDF2] active:scale-95 transition-all"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="flex-1 px-6 py-3 rounded-2xl bg-gradient-to-r from-[#FF6B81] to-[#FF9FF3] text-white font-bold text-sm shadow-lg hover:shadow-xl active:scale-95 transition-all"
+            >
+              添加记录
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+});
+
+AddTransactionModal.displayName = 'AddTransactionModal';
