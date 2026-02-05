@@ -13,16 +13,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "韩币人民币汇率换算",
-  description: "韩币和人民币实时汇率换算工具",
+  title: "Road to freedom",
+  description: "Road to freedom",
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: '汇率换算',
+    title: 'Road to freedom',
   },
   icons: {
-    icon: '/icon-192.png',
-    apple: '/icon-192.png',
+    icon: '/icon-192-new.png',
+    apple: '/icon-192-new.png',
   },
 };
 
