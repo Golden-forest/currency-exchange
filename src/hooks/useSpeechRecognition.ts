@@ -212,6 +212,13 @@ export const useSpeechRecognition = (
           setTranscript(result.transcript);
           setInterimTranscript('');
 
+          // 立即停止识别,释放麦克风
+          try {
+            service.stop();
+          } catch (error) {
+            console.error('停止识别错误:', error);
+          }
+
           // 触发完成回调
           if (onTranscriptComplete) {
             onTranscriptComplete(result.transcript, targetLang);
