@@ -18,6 +18,7 @@ import {
   initTranslationService,
   getTranslationStats,
 } from '@/services/translationService';
+import { detectLanguage } from '@/utils/detectLanguage';
 
 /**
  * Hook 返回值接口
@@ -169,14 +170,23 @@ export const useTranslation = (options: UseTranslationOptions = {}): UseTranslat
     // 清除之前的错误
     setError(null);
 
+    // 自动语言检测
+    const detectedLang = detectLanguage(textToTranslate);
+    if (detectedLang !== sourceLang) {
+      const newTargetLang = sourceLang;
+      setSourceLang(detectedLang);
+      setTargetLang(newTargetLang);
+      console.log(`自动检测到语言: ${detectedLang === 'zh' ? '中文' : '韩文'}，切换翻译方向`);
+    }
+
     // 开始加载
     setIsLoading(true);
 
     try {
-      // 调用翻译服务
+      // 调用翻译服务（使用检测到的语言）
       const result: TranslationResult = await serviceTranslate(
         textToTranslate,
-        sourceLang,
+        detectedLang,
         targetLang
       );
 
