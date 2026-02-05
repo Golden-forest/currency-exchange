@@ -75,6 +75,8 @@ export function TranslationCard() {
     isSupported,
   } = useSpeechRecognition({
     onTranscriptComplete: (transcript) => {
+      // 关闭识别状态
+      setIsRecognizing(false);
       // 语音识别完成后，自动翻译
       // 只调用 setInputValue，它会通过 handleInputChange 更新 sourceText
       setInputValue(transcript);
@@ -82,6 +84,52 @@ export function TranslationCard() {
       translate(transcript);
     },
   });
+
+  // ===== 录音计时器状态 =====
+
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [isRecognizing, setIsRecognizing] = useState(false);
+  const [recognitionError, setRecognitionError] = useState<string | null>(null);
+
+  /**
+   * 计时器 Effect
+   * 录音时每秒更新计时器
+   */
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (isListening) {
+      interval = setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
+    } else {
+      // 停止录音时重置计时器
+      setRecordingTime(0);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isListening]);
+
+  /**
+   * 监听语音识别错误，显示错误提示
+   */
+  useEffect(() => {
+    if (speechError) {
+      setRecognitionError('识别失败,请重试');
+      setIsRecognizing(false);
+
+      // 3秒后自动清除错误提示
+      const timer = setTimeout(() => {
+        setRecognitionError(null);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [speechError]);
 
   /** Toast 提示状态 */
   const [toast, setToast] = useState<{
@@ -259,15 +307,18 @@ export function TranslationCard() {
 
     // 检查是否有语音识别错误
     if (speechError) {
-      showToast(speechError);
+      setRecognitionError(null);
       return;
     }
 
     if (isListening) {
-      // 停止录音
+      // 停止录音，进入识别状态
+      setIsRecognizing(true);
       stopListening();
     } else {
-      // 直接使用 sourceLang，speechService 内部会处理语言代码转换
+      // 清除之前的错误
+      setRecognitionError(null);
+      // 开始录音
       startListening(sourceLang);
     }
   }, [isListening, sourceLang, isSupported, speechError, startListening, stopListening, showToast]);
@@ -501,6 +552,7 @@ export function TranslationCard() {
         isListening={isListening}
         interimTranscript={interimTranscript}
         onStop={stopListening}
+        recordingTime={recordingTime}
       />
 
       {/* Card Title */}
@@ -629,44 +681,81 @@ export function TranslationCard() {
         </div>
 
         {/* 麦克风按钮 */}
-        <div className="relative">
+        <div className="relative flex flex-col items-center gap-2">
+          {/* 状态提示文本 */}
+          <div className="h-5 flex items-center justify-center">
+            {isListening && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-[11px] font-bold text-[#E74C3C]"
+              >
+                正在录音...点击停止
+              </motion.div>
+            )}
+            {isRecognizing && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-[11px] font-bold text-[#1ABC9C]"
+              >
+                识别中...
+              </motion.div>
+            )}
+            {recognitionError && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-[11px] font-bold text-[#E74C3C]"
+              >
+                {recognitionError}
+              </motion.div>
+            )}
+          </div>
+
+          {/* 麦克风按钮 */}
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: isListening || isRecognizing ? 1 : 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleMicClick}
+            disabled={isRecognizing}
             className={`relative w-20 h-20 rounded-full flex items-center justify-center text-white shadow-soft-out-sm transition-all duration-200 ${
               isListening
-                ? 'bg-gradient-to-tr from-[#E74C3C] to-[#C0392B] shadow-glow-error'
+                ? 'bg-[#FF6B81] animate-pulse'
+                : isRecognizing
+                ? 'bg-gray-400 cursor-not-allowed'
                 : 'bg-gradient-to-tr from-[#1ABC9C] to-[#2ECC71] shadow-glow-primary'
             }`}
           >
-            {isListening ? (
-              // 停止图标
+            {isRecognizing ? (
+              // 识别中：加载动画
+              <motion.div
+                className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              />
+            ) : isListening ? (
+              // 录音中：停止图标
               <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
                 <rect x="6" y="6" width="12" height="12" rx="2" />
               </svg>
             ) : (
-              // 麦克风图标
+              // 未录音：麦克风图标
               <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
                 <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
               </svg>
             )}
 
-            {/* 录音时的脉冲动画 */}
-            {isListening && (
-              <>
-                <motion.span
-                  className="absolute inset-0 rounded-full bg-[#E74C3C]/30"
-                  animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                />
-                <motion.span
-                  className="absolute inset-0 rounded-full bg-[#E74C3C]/20"
-                  animate={{ scale: [1, 2], opacity: [0.3, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
-                />
-              </>
+            {/* 录音时的计时器 */}
+            {isListening && recordingTime > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="absolute -bottom-8 bg-[#FF6B81] text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg"
+              >
+                {recordingTime}s
+              </motion.div>
             )}
           </motion.button>
         </div>
