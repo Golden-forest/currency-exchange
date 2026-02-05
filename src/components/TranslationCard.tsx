@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { speak, isSpeechSynthesisSupported } from '@/services/ttsService';
+import { extractText, getOCRErrorMessage } from '@/services/ocrService';
 import { LANGUAGE_NAMES } from '@/types/translation';
 import { debounce } from '@/utils/debounce';
 import { ALL_PHRASES } from '@/data/phraseLibrary';
@@ -97,6 +98,11 @@ export function TranslationCard() {
   /** 弹窗打开状态 */
   const [isQuickPhrasesOpen, setIsQuickPhrasesOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  /** OCR 相关状态 */
+  const [ocrProgress, setOcrProgress] = useState(0);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   /**
    * 快捷短语列表
@@ -265,6 +271,65 @@ export function TranslationCard() {
       startListening(sourceLang);
     }
   }, [isListening, sourceLang, isSupported, speechError, startListening, stopListening, showToast]);
+
+  /**
+   * Scan 按钮点击处理
+   */
+  const handleScanClick = useCallback(() => {
+    // 触发文件选择器
+    fileInputRef.current?.click();
+  }, []);
+
+  /**
+   * 图片上传处理
+   */
+  const handleImageUpload = useCallback(async (file: File) => {
+    // 防止重复触发
+    if (isProcessingImage) {
+      return;
+    }
+
+    try {
+      setIsProcessingImage(true);
+      setOcrProgress(0);
+
+      // 提取文字
+      const text = await extractText(file, (progress) => {
+        setOcrProgress(progress);
+      });
+
+      // 检查识别结果
+      if (!text || text.trim().length === 0) {
+        showToast('未能识别出文字，请重试');
+        return;
+      }
+
+      // 设置输入值并翻译
+      setInputValue(text);
+      setSourceText(text);
+
+      // 清空本地状态
+      setLocalTargetText('');
+      setLocalRomanization('');
+
+      // 自动翻译
+      await translate(text);
+
+      showToast('识别成功');
+    } catch (error) {
+      console.error('OCR 识别失败:', error);
+      const errorMessage = getOCRErrorMessage(error);
+      showToast(errorMessage);
+    } finally {
+      setIsProcessingImage(false);
+      setOcrProgress(0);
+
+      // 清空文件输入，允许重新选择同一文件
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [isProcessingImage, setSourceText, translate, showToast]);
 
   // ===== Modal 回调函数 =====
 
@@ -607,7 +672,11 @@ export function TranslationCard() {
         </div>
 
         {/* Scan 按钮 */}
-        <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
+        <motion.div
+          className="flex flex-col items-center gap-1.5 cursor-pointer group"
+          whileTap={{ scale: 0.95 }}
+          onClick={handleScanClick}
+        >
           <div className="w-12 h-12 bg-white rounded-2xl shadow-soft-out-sm flex items-center justify-center text-[#94A3B8] border border-gray-50 group-active:shadow-soft-in">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -615,8 +684,71 @@ export function TranslationCard() {
             </svg>
           </div>
           <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">Scan</span>
-        </div>
+        </motion.div>
       </div>
+
+      {/* 隐藏的文件输入框 */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            handleImageUpload(file);
+          }
+        }}
+      />
+
+      {/* OCR 识别进度条 */}
+      {isProcessingImage && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-[3.5rem] flex flex-col items-center justify-center z-40"
+        >
+          <div className="flex flex-col items-center gap-4 px-8">
+            {/* 旋转的扫描图标 */}
+            <motion.div
+              className="w-20 h-20 bg-gradient-to-tr from-[#1ABC9C] to-[#2ECC71] rounded-full flex items-center justify-center shadow-glow-primary"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            >
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+            </motion.div>
+
+            {/* 进度文字 */}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-[#2D3436] mb-1">
+                识别中...
+              </div>
+              <div className="text-sm font-medium text-[#94A3B8]">
+                {ocrProgress}%
+              </div>
+            </div>
+
+            {/* 进度条 */}
+            <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-[#1ABC9C] to-[#2ECC71]"
+                initial={{ width: 0 }}
+                animate={{ width: `${ocrProgress}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </div>
+
+            {/* 提示文字 */}
+            <div className="text-xs text-[#CBD5E1] text-center max-w-xs">
+              请稍候，正在从图片中提取文字...
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Toast 提示 */}
       {toast.show && (
