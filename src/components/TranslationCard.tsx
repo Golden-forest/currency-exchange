@@ -17,16 +17,6 @@ export function TranslationCard() {
                 </h2>
             </div>
 
-            {/* Status Bar */}
-            <div className="flex justify-between items-center px-4 mb-4 opacity-40">
-                <span className="text-xs font-bold">9:41</span>
-                <div className="flex gap-1.5 items-center">
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21l-12-18h24z" /></svg>
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" /></svg>
-                    <div className="w-6 h-3 border border-current rounded-sm relative"><div className="absolute inset-y-0.5 left-0.5 right-1.5 bg-current rounded-px" /></div>
-                </div>
-            </div>
-
             {/* Header */}
             <div className="flex justify-between items-start mb-4 px-2">
                 <div>
@@ -49,7 +39,7 @@ export function TranslationCard() {
                 <div className="flex gap-3 px-1">
                     {quickPhrases.map((p) => (
                         <div key={p.id} className="bg-white/90 rounded-[2.5rem] p-3 flex items-center shadow-soft-out-sm flex-1 border border-white">
-                            <div className="w-9 h-9 bg-[#E0FAF5] rounded-full flex items-center justify-center text-[#1ABC9C] text-[10px] mr-2.5 shadow-soft-in">
+                            <div className="text-[#1ABC9C] text-[10px] mr-2.5">
                                 {p.icon}
                             </div>
                             <div>
@@ -65,7 +55,6 @@ export function TranslationCard() {
             <div className="px-2 mb-4">
                 <div className="bg-white/80 rounded-full p-1.5 flex items-center justify-between shadow-soft-out-sm border border-white">
                     <div className="flex items-center gap-2.5 pl-4 py-1">
-                        <span className="text-xl">🇨🇳</span>
                         <span className="text-sm font-bold text-[#2D3436]">Chinese</span>
                     </div>
                     <div className="w-10 h-10 bg-white rounded-full shadow-soft-out-sm flex items-center justify-center text-[#1ABC9C] border border-gray-50 active:shadow-soft-in">
@@ -75,18 +64,13 @@ export function TranslationCard() {
                     </div>
                     <div className="flex items-center gap-2.5 pr-4 py-1">
                         <span className="text-sm font-bold text-[#2D3436]">Korean</span>
-                        <span className="text-xl">🇰🇷</span>
                     </div>
                 </div>
             </div>
 
             {/* Text/Voice Input Card */}
             <div className="px-1 mb-4">
-                <div className="bg-[#E0FAF5]/60 rounded-[2.5rem] p-5 sm:p-6 shadow-soft-in border border-[#B2EBE0]/40 relative min-h-[120px]">
-                    <div className="flex justify-between items-center mb-3">
-                        <span className="text-[10px] font-bold text-[#1ABC9C] tracking-widest uppercase">DETECTING VOICE...</span>
-                        <button className="text-[#A4B0BE] text-xs">✕</button>
-                    </div>
+                <div className="bg-white rounded-[2.5rem] p-5 sm:p-6 shadow-soft-out-sm relative min-h-[120px] flex items-center justify-center">
                     <div className="text-2xl sm:text-3xl font-extrabold text-[#2D3436] leading-snug">
                         请问这个多少钱？
                     </div>
@@ -128,14 +112,12 @@ export function TranslationCard() {
                 </div>
 
                 <div className="relative">
-                    <div className="absolute inset-0 bg-[#1ABC9C]/15 rounded-full blur-2xl animate-pulse" />
-                    <div className="w-24 h-24 bg-white/40 rounded-full flex items-center justify-center shadow-soft-in">
-                        <button className="w-18 h-18 bg-gradient-to-tr from-[#1ABC9C] to-[#2ECC71] rounded-full shadow-lg flex items-center justify-center text-white active:scale-90 transition-transform">
-                            <svg className="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 1v11m0 0a3 3 0 01-3-3V5a3 3 0 116 0v3a3 3 0 01-3 3zm0 0a7 7 0 01-7-7M12 21H8m4 0h4" />
-                            </svg>
-                        </button>
-                    </div>
+                    <button className="relative w-20 h-20 bg-gradient-to-tr from-[#1ABC9C] to-[#2ECC71] rounded-full flex items-center justify-center text-white shadow-soft-out-sm active:scale-95 active:shadow-soft-in transition-all duration-200">
+                        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                        </svg>
+                    </button>
                 </div>
 
                 <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
@@ -147,11 +129,6 @@ export function TranslationCard() {
                     </div>
                     <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">Scan</span>
                 </div>
-            </div>
-
-            {/* Mobile indicator line */}
-            <div className="flex justify-center mt-2 mb-1">
-                <div className="w-24 h-1 bg-gray-200 rounded-full opacity-50" />
             </div>
         </div>
     );

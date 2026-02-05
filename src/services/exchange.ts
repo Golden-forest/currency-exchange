@@ -1,4 +1,11 @@
-import { ExchangeRate, Currency } from '@/types';
+import { ExchangeRate } from '@/types';
+
+interface ExchangeRateResponse {
+  rates: {
+    CNY: number;
+  };
+  date: string;
+}
 
 const EXCHANGE_API_URL = 'https://api.exchangerate-api.com/v4/latest/KRW';
 const CACHE_DURATION = 60 * 60 * 1000; // 1小时
@@ -52,7 +59,7 @@ export class ExchangeRateService {
   /**
    * 缓存汇率到 localStorage
    */
-  private cacheRate(data: any): void {
+  private cacheRate(data: ExchangeRateResponse): void {
     if (typeof window === 'undefined') return;
 
     const cacheData = {
