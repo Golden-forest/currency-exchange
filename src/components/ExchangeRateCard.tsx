@@ -21,16 +21,16 @@ export function ExchangeRateCard() {
       className="text-center cursor-pointer hover:opacity-80 transition-opacity"
     >
       {isLoading ? (
-        <span className="text-text-tertiary text-xs">加载中...</span>
+        <span className="text-text-secondary text-xs">加载中...</span>
       ) : error ? (
         <span className="text-red-400 text-xs">{error}</span>
       ) : (
         <div className="flex flex-col items-center gap-1">
-          <span className="text-text-tertiary text-xs">
+          <span className="text-text-secondary text-xs">
             1 KRW = {rate ? rate.toFixed(4) : '0'} CNY
           </span>
           {lastUpdate && (
-            <span className="text-text-tertiary text-xs">
+            <span className="text-text-secondary text-xs">
               更新: {formatTime(lastUpdate)}
             </span>
           )}

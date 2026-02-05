@@ -1,27 +1,75 @@
 @import "tailwindcss";
 
-:root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 10, 10, 10;
-  --background-end-rgb: 26, 26, 26;
+@theme {
+  --color-bg-main: #F0F2F6;
+  --color-bg-card: #FFFFFF;
+  --color-bg-input: #E9EDF2;
+
+  --color-primary: #8B5CF6;
+  --color-primary-light: #A78BFA;
+  --color-primary-dark: #6D28D9;
+
+  --color-text-primary: #1E293B;
+  --color-text-secondary: #64748B;
+  --color-text-value: #334155;
+
+  /* Stronger Skeuomorphic Shadows */
+  --shadow-soft-out: 12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff;
+  --shadow-soft-out-lg: 20px 20px 40px #c5cedd, -20px -20px 40px #ffffff;
+  --shadow-soft-out-sm: 6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff;
+
+  /* Neumorphic sunken effect - subtle and natural */
+  --shadow-soft-in:
+    inset 6px 6px 12px rgba(163, 177, 198, 0.4),
+    inset -6px -6px 12px rgba(255, 255, 255, 0.8),
+    inset 1px 1px 2px rgba(163, 177, 198, 0.2);
+
+  --shadow-glow-primary: 0 10px 20px rgba(139, 92, 246, 0.3);
+
+  --radius-4xl: 2.5rem;
+  --radius-5xl: 3.5rem;
+  --radius-6xl: 4.5rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+:root {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  color: #1E293B;
+  background-color: #F0F2F6;
+  background-image: url('/travel-bg.png');
+  background-repeat: repeat;
+  background-size: 300px;
+  background-attachment: fixed;
   min-height: 100vh;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+.title-skeuo {
+  font-weight: 800;
+  color: #1E293B;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05), -1px -1px 0px rgba(255, 255, 255, 0.8);
+  letter-spacing: -0.02em;
+}
+
+.glass-container {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.skeuo-pill {
+  background: linear-gradient(145deg, #ffffff, #f0f2f6);
+  box-shadow: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.skeuo-pill:active {
+  background: #f0f2f6;
+  box-shadow: inset 6px 6px 12px #d1d9e6, inset -6px -6px 12px #ffffff;
 }
 
 /* 自定义动画 */
@@ -30,6 +78,7 @@ body {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -56,4 +105,25 @@ body {
   .text-6xl {
     font-size: 4rem;
   }
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.1);
 }

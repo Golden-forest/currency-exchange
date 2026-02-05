@@ -83,7 +83,7 @@ export function QuickButtons({ currency, onSelectAmount }: QuickButtonsProps) {
         <button
           key={`history-${index}`}
           onClick={() => handleSelectAmount(amount)}
-          className="py-3 px-2 rounded-full font-bold text-sm text-[#8B5CF6] bg-gradient-to-br from-[#EDE9FE] to-[#DDD6FE] shadow-[4px_4px_8px_rgba(139,92,246,0.15),-2px_-2px_6px_rgba(255,255,255,0.8)] border border-[#C4B5FD]/30 hover:scale-[1.05] active:scale-[0.98] transition-all duration-200"
+          className="py-3 px-2 rounded-full font-bold text-sm text-[#8B5CF6] bg-gradient-to-br from-[#EDE9FE] to-[#DDD6FE] shadow-[4px_4px_8px_rgba(139,92,246,0.15),-2px_-2px_6px_rgba(255,255,255,0.8)] hover:scale-[1.05] active:scale-[0.98] transition-all duration-200"
         >
           {formatAmount(amount, currency)}
         </button>

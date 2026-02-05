@@ -3,30 +3,31 @@
 import { useState, useEffect } from 'react';
 import { exchangeService } from '@/services/exchange';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { ExchangeRateCard } from '@/components/ExchangeRateCard';
-import { ConversionCard } from '@/components/ConversionCard';
-import { QuickButtons } from '@/components/QuickButtons';
+import { CurrencyConverterCard } from '@/components/CurrencyConverterCard';
+import { TripLedgerCard } from '@/components/TripLedgerCard';
+import { TranslationCard } from '@/components/TranslationCard';
+import { motion, AnimatePresence } from 'framer-motion';
 
-type EditingCard = 'cny' | 'krw' | null;
+type CardType = 'converter' | 'ledger' | 'translation';
+const CARDS: CardType[] = ['converter', 'ledger', 'translation'];
 
 export default function Home() {
-  // 固定:CNY在上,KRW在下
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+
+  // Currency states
   const [cnyAmount, setCnyAmount] = useLocalStorage<number>('cnyAmount', 0);
   const [krwAmount, setKrwAmount] = useLocalStorage<number>('krwAmount', 0);
-  const [editingCard, setEditingCard] = useState<EditingCard>(null);
-  const [lastEdited, setLastEdited] = useState<'cny' | 'krw'>('cny');
+  const [lastEdited, setLastEdited] = useLocalStorage<'cny' | 'krw'>('lastEdited', 'krw');
 
-  // 根据最后编辑的货币计算另一个
   useEffect(() => {
     if (!exchangeService.getCurrentRate()) return;
 
     try {
       if (lastEdited === 'cny') {
-        // 从CNY计算KRW
         const krw = exchangeService.cnyToKrw(cnyAmount);
         setKrwAmount(krw);
       } else {
-        // 从KRW计算CNY
         const cny = exchangeService.krwToCny(krwAmount);
         setCnyAmount(cny);
       }
@@ -53,40 +54,117 @@ export default function Home() {
     }
   };
 
+  const handleClear = () => {
+    setCnyAmount(0);
+    setKrwAmount(0);
+  };
+
+  const paginate = (newDirection: number) => {
+    const nextIndex = activeCardIndex + newDirection;
+    if (nextIndex >= 0 && nextIndex < CARDS.length) {
+      setDirection(newDirection);
+      setActiveCardIndex(nextIndex);
+    }
+  };
+
+  const variants = {
+    enter: (direction: number) => ({
+      y: direction > 0 ? '100%' : '-100%',
+      opacity: 0,
+      scale: 0.9,
+    }),
+    center: {
+      zIndex: 1,
+      y: 0,
+      opacity: 1,
+      scale: 1,
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      y: direction < 0 ? '100%' : '-100%',
+      opacity: 0,
+      scale: 0.9,
+    }),
+  };
+
+  // 根据当前卡片获取对应的背景色
+  const getBackgroundGradient = () => {
+    switch (activeCardIndex) {
+      case 0: // CurrencyConverterCard - 紫色
+        return 'bg-gradient-to-br from-[#F5F3FF] to-[#EDE9FE]';
+      case 1: // TripLedgerCard - 粉红色
+        return 'bg-gradient-to-br from-[#FFF5F5] to-[#FFE4E1]';
+      case 2: // TranslationCard - 淡青色
+        return 'bg-gradient-to-br from-[#E0F2FE] to-[#BAE6FD]';
+      default:
+        return 'bg-[#EAEEF3]';
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-gradient-dark flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md flex flex-col gap-5 animate-fade-in-up flex-1">
-        {/* 转换区域 - CNY固定在上,KRW固定在下 */}
-        <div className="flex flex-col gap-4 flex-1">
-          <ConversionCard
-            amount={cnyAmount}
-            currency="CNY"
-            onAmountChange={handleCnyChange}
-            isEditing={editingCard === 'cny'}
-            onEditStart={() => setEditingCard('cny')}
-            onEditEnd={() => setEditingCard(null)}
-          />
-          <ConversionCard
-            amount={krwAmount}
-            currency="KRW"
-            onAmountChange={handleKrwChange}
-            isEditing={editingCard === 'krw'}
-            onEditStart={() => setEditingCard('krw')}
-            onEditEnd={() => setEditingCard(null)}
-          />
-        </div>
+    <main className={`h-screen w-full ${getBackgroundGradient()} overflow-hidden flex flex-col items-center justify-center p-2 sm:p-4 relative touch-none transition-all duration-500`}>
 
-        {/* 快捷按钮 */}
-        <QuickButtons
-          currency={lastEdited === 'cny' ? 'CNY' : 'KRW'}
-          onSelectAmount={handleQuickSelect}
-        />
+      <div className="w-full max-w-lg h-[92vh] relative perspective-1000">
+        <AnimatePresence initial={false} custom={direction}>
+          <motion.div
+            key={activeCardIndex}
+            custom={direction}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              y: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.3 },
+              scale: { duration: 0.4 }
+            }}
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(e, { offset, velocity }) => {
+              const swipe = offset.y;
+              if (swipe < -100) {
+                paginate(1);
+              } else if (swipe > 100) {
+                paginate(-1);
+              }
+            }}
+            className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing"
+          >
+            {activeCardIndex === 0 && (
+              <CurrencyConverterCard
+                cnyAmount={cnyAmount}
+                krwAmount={krwAmount}
+                onCnyChange={handleCnyChange}
+                onKrwChange={handleKrwChange}
+                onQuickSelect={handleQuickSelect}
+                onClear={handleClear}
+                lastEdited={lastEdited}
+                setLastEdited={setLastEdited}
+              />
+            )}
+            {activeCardIndex === 1 && <TripLedgerCard />}
+            {activeCardIndex === 2 && <TranslationCard />}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      {/* 汇率信息 - 移到最底部 */}
-      <div className="mt-4">
-        <ExchangeRateCard />
+      {/* Pagination Dots */}
+      <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30">
+        {CARDS.map((_, i) => (
+          <div
+            key={i}
+            onClick={() => {
+              setDirection(i > activeCardIndex ? 1 : -1);
+              setActiveCardIndex(i);
+            }}
+            className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${activeCardIndex === i ? 'bg-[#8B5CF6] h-6 shadow-glow-primary' : 'bg-[#D1D9E6]'
+              }`}
+          />
+        ))}
       </div>
+
     </main>
   );
 }
+
