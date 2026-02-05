@@ -7,6 +7,7 @@ import { CurrencyConverterCard } from '@/components/CurrencyConverterCard';
 import { TripLedgerCard } from '@/components/TripLedgerCard';
 import { TranslationCard } from '@/components/TranslationCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { validateGoogleTranslateConfig } from '@/utils/googleTranslate';
 
 type CardType = 'converter' | 'ledger' | 'translation';
 const CARDS: CardType[] = ['converter', 'ledger', 'translation'];
@@ -14,6 +15,24 @@ const CARDS: CardType[] = ['converter', 'ledger', 'translation'];
 export default function Home() {
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+
+  // 在应用启动时验证环境变量配置
+  useEffect(() => {
+    const configValidation = validateGoogleTranslateConfig();
+    if (!configValidation.isValid) {
+      console.warn('配置警告:', configValidation.error);
+      // 在开发环境中显示更详细的警告
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(
+          '\n请按以下步骤配置 Google Translate API:\n' +
+          '1. 复制 .env.local.example 为 .env.local\n' +
+          '2. 在 .env.local 中设置 NEXT_PUBLIC_GOOGLE_TRANSLATE_API_KEY\n' +
+          '3. 重启开发服务器\n\n' +
+          '获取 API 密钥: https://console.cloud.google.com/'
+        );
+      }
+    }
+  }, []);
 
   // Currency states
   const [cnyAmount, setCnyAmount] = useLocalStorage<number>('cnyAmount', 0);

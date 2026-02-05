@@ -27,3 +27,21 @@ export type {
   SettlementItem,
   TransactionsByDate,
 } from './trip';
+
+// 导出翻译相关类型
+export type {
+  Language,
+  InputMode,
+  PhraseCategory,
+  CategoryMetadata,
+  Phrase,
+  TranslationHistory,
+  TranslationState,
+  TranslationResult,
+  SpeechRecognitionStatus,
+  OcrStatus,
+  TranslationErrorType,
+  TranslationError,
+} from './translation';
+
+export { LANGUAGE_NAMES } from './translation';
