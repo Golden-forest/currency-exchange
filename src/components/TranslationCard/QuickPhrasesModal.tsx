@@ -4,7 +4,6 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PhraseCategory, Phrase } from '@/types/translation';
 import { PHRASE_CATEGORIES, PHRASES_BY_CATEGORY } from '@/data/phraseLibrary';
-import { LONG_PRESS_DURATION } from '@/constants/modal';
 
 /**
  * QuickPhrasesModal 组件的 Props
@@ -18,6 +17,8 @@ interface QuickPhrasesModalProps {
   onPhraseSelect: (phrase: string) => void;
   /** 显示 Toast 提示 */
   showToast: (message: string) => void;
+  /** 收藏状态变化回调 */
+  onFavoriteChange?: () => void;
 }
 
 /**
@@ -26,8 +27,8 @@ interface QuickPhrasesModalProps {
  * 功能：
  * - 显示 6 个分类标签（横向滚动）
  * - 显示当前分类的短语列表
- * - 点击短语：使用并关闭弹窗
- * - 长按短语：切换收藏状态
+ * - 点击短语：直接发音，不关闭弹窗
+ * - 点击爱心图标：切换收藏状态
  * - Neumorphism 设计风格
  * - Framer Motion 动画
  */
@@ -36,6 +37,7 @@ export const QuickPhrasesModal = React.memo<QuickPhrasesModalProps>(({
   onClose,
   onPhraseSelect,
   showToast,
+  onFavoriteChange,
 }) => {
   // 当前选中的分类
   const [selectedCategory, setSelectedCategory] = useState<PhraseCategory>('greeting');
@@ -51,20 +53,16 @@ export const QuickPhrasesModal = React.memo<QuickPhrasesModalProps>(({
     }
   });
 
-  // 长按定时器
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [longPressedPhrase, setLongPressedPhrase] = useState<Phrase | null>(null);
-
-  // 检测是否为移动设备
-  const [isMobile, setIsMobile] = useState(false);
-
-  // 组件挂载时检测设备类型
-  React.useEffect(() => {
-    const checkMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
-    setIsMobile(checkMobile);
-  }, []);
+  // 收藏的短语顺序列表（最新收藏的在前面）
+  const [favoriteOrder, setFavoriteOrder] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const order = localStorage.getItem('favorite_phrases_order');
+      return order ? JSON.parse(order) : [];
+    } catch {
+      return [];
+    }
+  });
 
   /**
    * 获取当前分类的短语列表
@@ -76,26 +74,37 @@ export const QuickPhrasesModal = React.memo<QuickPhrasesModalProps>(({
   /**
    * 保存收藏到 LocalStorage
    */
-  const saveFavorites = useCallback((ids: Set<string>) => {
+  const saveFavorites = useCallback((ids: Set<string>, order: string[]) => {
     try {
       localStorage.setItem('favorite_phrases', JSON.stringify([...ids]));
+      localStorage.setItem('favorite_phrases_order', JSON.stringify(order));
     } catch (error) {
       console.error('保存收藏失败:', error);
     }
   }, []);
 
   /**
-   * 切换收藏状态
+   * 切换收藏状态（点击爱心图标）
    */
-  const toggleFavorite = useCallback((phrase: Phrase) => {
+  const toggleFavorite = useCallback((phrase: Phrase, e: React.MouseEvent) => {
+    e.stopPropagation(); // 阻止事件冒泡，不触发短语点击
+
     const newFavorites = new Set(favoritePhraseIds);
+    let newOrder = [...favoriteOrder];
+
     if (newFavorites.has(phrase.id)) {
+      // 取消收藏
       newFavorites.delete(phrase.id);
+      newOrder = newOrder.filter(id => id !== phrase.id);
     } else {
+      // 添加收藏，放到最前面
       newFavorites.add(phrase.id);
+      newOrder.unshift(phrase.id);
     }
+
     setFavoritePhraseIds(newFavorites);
-    saveFavorites(newFavorites);
+    setFavoriteOrder(newOrder);
+    saveFavorites(newFavorites, newOrder);
 
     // 显示 Toast 提示
     const message = newFavorites.has(phrase.id)
@@ -103,39 +112,19 @@ export const QuickPhrasesModal = React.memo<QuickPhrasesModalProps>(({
       : `已取消收藏: ${phrase.zh}`;
 
     showToast(message);
-  }, [favoritePhraseIds, saveFavorites, showToast]);
+
+    // 通知父组件收藏状态变化
+    onFavoriteChange?.();
+  }, [favoritePhraseIds, favoriteOrder, saveFavorites, showToast, onFavoriteChange]);
 
   /**
-   * 处理短语点击
+   * 处理短语点击（直接发音，不关闭弹窗）
    */
   const handlePhraseClick = useCallback((phrase: Phrase) => {
-    // 关闭弹窗
-    onClose();
-    // 调用选择回调
+    // 调用选择回调（会在父组件中处理发音）
     onPhraseSelect(phrase.zh);
-  }, [onClose, onPhraseSelect]);
-
-  /**
-   * 处理短语长按开始
-   */
-  const handlePhrasePressStart = useCallback((phrase: Phrase) => {
-    const timer = setTimeout(() => {
-      setLongPressedPhrase(phrase);
-      toggleFavorite(phrase);
-    }, LONG_PRESS_DURATION);
-    setLongPressTimer(timer);
-  }, [toggleFavorite]);
-
-  /**
-   * 处理短语长按结束
-   */
-  const handlePhrasePressEnd = useCallback(() => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-    setLongPressedPhrase(null);
-  }, [longPressTimer]);
+    // 不关闭弹窗，让用户可以继续选择其他短语
+  }, [onPhraseSelect]);
 
   /**
    * 处理背景点击关闭
@@ -182,28 +171,21 @@ export const QuickPhrasesModal = React.memo<QuickPhrasesModalProps>(({
    */
   const renderPhraseCard = (phrase: Phrase) => {
     const isFavorite = favoritePhraseIds.has(phrase.id);
-    const isPressed = longPressedPhrase?.id === phrase.id;
 
     return (
       <motion.div
         key={phrase.id}
-        whileHover={{ scale: isMobile ? 1 : 1.02 }}
+        whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => handlePhraseClick(phrase)}
-        onMouseDown={() => !isMobile && handlePhrasePressStart(phrase)}
-        onMouseUp={() => !isMobile && handlePhrasePressEnd()}
-        onMouseLeave={() => !isMobile && handlePhrasePressEnd()}
-        onTouchStart={() => isMobile && handlePhrasePressStart(phrase)}
-        onTouchEnd={() => isMobile && handlePhrasePressEnd()}
-        className={`bg-white/90 rounded-[2rem] p-4 shadow-soft-out-sm border border-white cursor-pointer relative overflow-hidden transition-all ${
-          isPressed ? 'scale-95' : ''
-        }`}
+        className="bg-white/90 rounded-[2rem] p-4 shadow-soft-out-sm border border-white cursor-pointer relative overflow-hidden transition-all"
       >
-        {/* 收藏图标 */}
-        <motion.div
-          className="absolute top-3 right-3"
-          animate={{ scale: isFavorite ? 1 : 0.8 }}
-          transition={{ duration: 0.2 }}
+        {/* 收藏图标按钮 */}
+        <motion.button
+          onClick={(e) => toggleFavorite(phrase, e)}
+          className="absolute top-3 right-3 z-10 p-1 hover:scale-110 transition-transform"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
         >
           <svg
             className={`w-5 h-5 ${isFavorite ? 'text-[#FF6B81]' : 'text-[#CBD5E1]'}`}
@@ -218,7 +200,7 @@ export const QuickPhrasesModal = React.memo<QuickPhrasesModalProps>(({
               d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
             />
           </svg>
-        </motion.div>
+        </motion.button>
 
         {/* 短语内容 */}
         <div className="pr-8">
@@ -237,19 +219,6 @@ export const QuickPhrasesModal = React.memo<QuickPhrasesModalProps>(({
             {phrase.romanization}
           </div>
         </div>
-
-        {/* 长按提示（仅在被长按时显示） */}
-        {isPressed && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-[2rem]"
-          >
-            <span className="text-white text-sm font-bold">
-              {isFavorite ? '已取消收藏' : '已收藏'}
-            </span>
-          </motion.div>
-        )}
       </motion.div>
     );
   };
@@ -320,7 +289,7 @@ export const QuickPhrasesModal = React.memo<QuickPhrasesModalProps>(({
             {/* 底部提示 */}
             <div className="mt-4 text-center">
               <p className="text-xs text-[#A4B0BE]">
-                💡 长按短语可收藏/取消收藏
+                💡 点击短语发音，点击爱心收藏
               </p>
             </div>
           </motion.div>

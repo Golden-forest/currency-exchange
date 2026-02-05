@@ -105,33 +105,60 @@ export function TranslationCard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   /**
+   * 收藏的短语 ID 列表（从 LocalStorage 加载）
+   */
+  const [favoritePhraseIds, setFavoritePhraseIds] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set();
+    try {
+      const saved = localStorage.getItem('favorite_phrases');
+      const savedIds = saved ? JSON.parse(saved) : [];
+      // 收藏顺序列表（用于按时间排序）
+      const order = localStorage.getItem('favorite_phrases_order');
+      const orderList = order ? JSON.parse(order) : [];
+      // 返回 Set 用于快速查找，同时保留顺序信息
+      return new Set(savedIds);
+    } catch {
+      return new Set();
+    }
+  });
+
+  /**
+   * 收藏的短语顺序列表（最新收藏的在前面）
+   */
+  const [favoriteOrder, setFavoriteOrder] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const order = localStorage.getItem('favorite_phrases_order');
+      return order ? JSON.parse(order) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  /**
    * 快捷短语列表
-   * 从短语库中动态加载最常用的 2 个短语
-   * 优先显示问候类和餐厅类短语（使用频率最高）
+   * 从收藏的短语中加载，最新收藏的在前面
    */
   const quickPhrases = useMemo<Phrase[]>(() => {
-    // 定义常用短语 ID（基于使用频率）
-    const commonPhraseIds = [
-      'greeting_01', // 你好
-      'restaurant_01', // 请问这个多少钱？
-    ];
+    // 如果没有收藏，返回默认短语
+    if (favoriteOrder.length === 0) {
+      const defaultPhrases = ALL_PHRASES.filter(p =>
+        p.id === 'greeting_01' || p.id === 'restaurant_01'
+      );
+      return defaultPhrases;
+    }
 
-    // 从短语库中查找对应的短语
+    // 按照收藏顺序加载短语（最新的在前面）
     const phrases: Phrase[] = [];
-    for (const id of commonPhraseIds) {
+    for (const id of favoriteOrder) {
       const phrase = ALL_PHRASES.find(p => p.id === id);
       if (phrase) {
         phrases.push(phrase);
       }
     }
 
-    // 如果找不到预定义的短语，则返回前 2 个
-    if (phrases.length === 0) {
-      return ALL_PHRASES.slice(0, 2);
-    }
-
     return phrases;
-  }, []);
+  }, [favoriteOrder]);
 
   // ===== 核心操作 =====
 
@@ -239,13 +266,41 @@ export function TranslationCard() {
   }, [swapLanguages, targetText]);
 
   /**
-   * 使用快捷短语
+   * 使用快捷短语（直接发音并放入输入框）
    */
-  const handleQuickPhrase = useCallback((text: string) => {
-    setInputValue(text);
-    setSourceText(text);
-    translate(text);
-  }, [translate]);
+  const handleQuickPhrase = useCallback(async (phrase: Phrase) => {
+    // 将文本放入输入框
+    setInputValue(phrase.zh);
+    setSourceText(phrase.zh);
+
+    // 清空本地状态
+    setLocalTargetText('');
+    setLocalRomanization('');
+
+    // 直接播放韩语发音（使用短语库中的韩文）
+    if (!isSpeechSynthesisSupported()) {
+      showToast('您的浏览器不支持语音播放');
+      return;
+    }
+
+    if (isPlaying) {
+      return; // 正在播放中，不打断
+    }
+
+    setIsPlaying(true);
+    try {
+      // 直接使用短语库中的韩文发音
+      await speak(phrase.ko, 'ko');
+    } catch (error) {
+      console.error('播放失败:', error);
+      showToast('播放失败');
+    } finally {
+      setIsPlaying(false);
+    }
+
+    // 同时翻译文本（在后台进行）
+    translate(phrase.zh);
+  }, [translate, isPlaying, showToast]);
 
   /**
    * 麦克风按钮点击处理
@@ -334,13 +389,67 @@ export function TranslationCard() {
   // ===== Modal 回调函数 =====
 
   /**
-   * 处理快捷短语选择
+   * 处理快捷短语选择（直接发音并放入输入框）
    */
-  const handlePhraseSelect = useCallback((phrase: string) => {
+  const handlePhraseSelect = useCallback(async (phrase: string) => {
+    // 从短语库中查找对应的短语
+    const phraseObj = ALL_PHRASES.find(p => p.zh === phrase);
+    if (!phraseObj) {
+      showToast('短语不存在');
+      return;
+    }
+
+    // 将文本放入输入框
     setInputValue(phrase);
+    setSourceText(phrase);
+
+    // 清空本地状态
+    setLocalTargetText('');
+    setLocalRomanization('');
+
+    // 直接播放韩语发音（使用短语库中的韩文）
+    if (!isSpeechSynthesisSupported()) {
+      showToast('您的浏览器不支持语音播放');
+      return;
+    }
+
+    if (isPlaying) {
+      return; // 正在播放中，不打断
+    }
+
+    setIsPlaying(true);
+    try {
+      // 直接使用短语库中的韩文发音
+      await speak(phraseObj.ko, 'ko');
+    } catch (error) {
+      console.error('播放失败:', error);
+      showToast('播放失败');
+    } finally {
+      setIsPlaying(false);
+    }
+
+    // 同时翻译文本（在后台进行）
     translate(phrase);
-    setIsQuickPhrasesOpen(false);
-  }, [translate]);
+  }, [translate, isPlaying, showToast]);
+
+  /**
+   * 处理收藏状态变化（重新加载收藏列表）
+   */
+  const handleFavoriteChange = useCallback(() => {
+    // 重新加载收藏顺序
+    try {
+      const order = localStorage.getItem('favorite_phrases_order');
+      const orderList = order ? JSON.parse(order) : [];
+      setFavoriteOrder(orderList);
+
+      // 重新加载收藏 ID 集合
+      const saved = localStorage.getItem('favorite_phrases');
+      const savedIds = saved ? JSON.parse(saved) : [];
+      setFavoritePhraseIds(new Set(savedIds));
+    } catch (error) {
+      console.error('重新加载收藏失败:', error);
+    }
+  }, []);
 
   /**
    * 处理历史记录选择
@@ -544,15 +653,15 @@ export function TranslationCard() {
             View All
           </span>
         </div>
-        <div className="flex gap-3 px-1">
+        <div className="flex gap-3 px-1 overflow-x-auto pb-2 scrollbar-hide">
           {/* 动态渲染快捷短语 */}
           {quickPhrases.map((phrase) => (
             <motion.div
               key={phrase.id}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => handleQuickPhrase(phrase.zh)}
-              className="bg-white/90 rounded-[2.5rem] p-3 flex items-center shadow-soft-out-sm flex-1 border border-white cursor-pointer"
+              onClick={() => handleQuickPhrase(phrase)}
+              className="bg-white/90 rounded-[2.5rem] p-3 flex items-center shadow-soft-out-sm flex-shrink-0 min-w-[200px] border border-white cursor-pointer"
             >
               <div className="text-[#1ABC9C] text-[10px] mr-2.5">▶</div>
               <div>
@@ -768,6 +877,7 @@ export function TranslationCard() {
         onClose={() => setIsQuickPhrasesOpen(false)}
         onPhraseSelect={handlePhraseSelect}
         showToast={showToast}
+        onFavoriteChange={handleFavoriteChange}
       />
 
       {/* 翻译历史弹窗 */}
