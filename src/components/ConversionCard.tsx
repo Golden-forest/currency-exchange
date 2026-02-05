@@ -64,9 +64,9 @@ export function ConversionCard({
         whileHover={{ scale: isEditing ? 1 : 1.01 }}
         whileTap={{ scale: isEditing ? 1 : 0.99 }}
         className={`
-          relative bg-white border-none rounded-4xl p-4 sm:p-5
+          relative bg-white border border-white rounded-[2.5rem] p-4 sm:p-5
           flex items-center justify-between
-          shadow-soft-in
+          shadow-soft-out-sm
           transition-all cursor-text min-h-[85px] sm:min-h-[100px]
           ${isEditing ? 'ring-2 ring-primary/10' : ''}
         `}

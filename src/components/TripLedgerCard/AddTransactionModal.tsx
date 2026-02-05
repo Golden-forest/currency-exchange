@@ -235,11 +235,11 @@ export const AddTransactionModal = React.memo(({
                   setErrors(prev => ({ ...prev, merchantName: undefined }));
                 }}
                 placeholder="例如: 明洞饺子"
-                className={`w-full px-4 py-3 rounded-2xl bg-[#F0F2F6] border-2 transition-all ${
+                className={`w-full px-5 py-4 rounded-[2.5rem] bg-white border border-white shadow-soft-out-sm transition-all ${
                   errors.merchantName
                     ? 'border-[#FF6B81] focus:border-[#FF6B81]'
-                    : 'border-transparent focus:border-[#8B5CF6]'
-                } focus:outline-none shadow-soft-in text-sm`}
+                    : 'focus:border-[#8B5CF6]'
+                } focus:outline-none text-sm`}
               />
               {errors.merchantName && (
                 <p className="mt-2 text-xs text-[#FF6B81] font-medium">
@@ -260,11 +260,11 @@ export const AddTransactionModal = React.memo(({
                     value={amountKRW}
                     onChange={(e) => handleKRWChange(e.target.value)}
                     placeholder="例如: 15000"
-                    className={`w-full px-4 py-3 pl-12 pr-4 rounded-2xl bg-[#F0F2F6] border-2 transition-all ${
+                    className={`w-full px-5 py-4 pl-12 pr-4 rounded-[2.5rem] bg-white border border-white shadow-soft-out-sm transition-all ${
                       errors.amount
                         ? 'border-[#FF6B81] focus:border-[#FF6B81]'
-                        : 'border-transparent focus:border-[#8B5CF6]'
-                    } focus:outline-none shadow-soft-in text-sm`}
+                        : 'focus:border-[#8B5CF6]'
+                    } focus:outline-none text-sm`}
                   />
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-[#636E72]">
                     ₩
@@ -297,11 +297,11 @@ export const AddTransactionModal = React.memo(({
                   setPayer(e.target.value);
                   setErrors(prev => ({ ...prev, payer: undefined }));
                 }}
-                className={`w-full px-4 py-3 rounded-2xl bg-[#F0F2F6] border-2 transition-all ${
+                className={`w-full px-5 py-4 rounded-[2.5rem] bg-white border border-white shadow-soft-out-sm transition-all ${
                   errors.payer
                     ? 'border-[#FF6B81] focus:border-[#FF6B81]'
-                    : 'border-transparent focus:border-[#8B5CF6]'
-                } focus:outline-none shadow-soft-in text-sm appearance-none cursor-pointer`}
+                    : 'focus:border-[#8B5CF6]'
+                } focus:outline-none text-sm appearance-none cursor-pointer`}
               >
                 <option value="">选择付款人</option>
                 {travelers.map((traveler) => (
@@ -400,11 +400,11 @@ export const AddTransactionModal = React.memo(({
                     setTreatedBy(e.target.value);
                     setErrors(prev => ({ ...prev, treatedBy: undefined }));
                   }}
-                  className={`w-full px-4 py-3 rounded-2xl bg-[#F0F2F6] border-2 transition-all ${
+                  className={`w-full px-5 py-4 rounded-[2.5rem] bg-white border border-white shadow-soft-out-sm transition-all ${
                     errors.treatedBy
                       ? 'border-[#FF6B81] focus:border-[#FF6B81]'
-                      : 'border-transparent focus:border-[#8B5CF6]'
-                  } focus:outline-none shadow-soft-in text-sm appearance-none cursor-pointer`}
+                      : 'focus:border-[#8B5CF6]'
+                  } focus:outline-none text-sm appearance-none cursor-pointer`}
                 >
                   <option value="">选择请客的人</option>
                   {travelers.map((traveler) => (

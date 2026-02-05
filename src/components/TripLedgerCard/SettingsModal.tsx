@@ -151,11 +151,11 @@ export const SettingsModal = React.memo(({ settings, onSave, onClose }: Props) =
                   setErrors(prev => ({ ...prev, travelers: undefined }));
                 }}
                 placeholder="用逗号分隔，例如: 张三, 李四, 王五"
-                className={`w-full px-4 py-3 rounded-2xl bg-[#F0F2F6] border-2 transition-all ${
+                className={`w-full px-5 py-4 rounded-[2.5rem] bg-white border border-white shadow-soft-out-sm transition-all ${
                   errors.travelers
                     ? 'border-[#FF6B81] focus:border-[#FF6B81]'
-                    : 'border-transparent focus:border-[#8B5CF6]'
-                } focus:outline-none shadow-soft-in text-sm`}
+                    : 'focus:border-[#8B5CF6]'
+                } focus:outline-none text-sm`}
               />
               {errors.travelers && (
                 <p className="mt-2 text-xs text-[#FF6B81] font-medium">
@@ -183,11 +183,11 @@ export const SettingsModal = React.memo(({ settings, onSave, onClose }: Props) =
                     setErrors(prev => ({ ...prev, budget: undefined }));
                   }}
                   placeholder="例如: 2000000"
-                  className={`w-full px-4 py-3 pl-12 pr-4 rounded-2xl bg-[#F0F2F6] border-2 transition-all ${
+                  className={`w-full px-5 py-4 pl-12 pr-4 rounded-[2.5rem] bg-white border border-white shadow-soft-out-sm transition-all ${
                     errors.budget
                       ? 'border-[#FF6B81] focus:border-[#FF6B81]'
-                      : 'border-transparent focus:border-[#8B5CF6]'
-                  } focus:outline-none shadow-soft-in text-sm`}
+                      : 'focus:border-[#8B5CF6]'
+                  } focus:outline-none text-sm`}
                 />
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-[#636E72]">
                   ₩
@@ -218,11 +218,11 @@ export const SettingsModal = React.memo(({ settings, onSave, onClose }: Props) =
                   setErrors(prev => ({ ...prev, location: undefined }));
                 }}
                 placeholder="例如: Seoul, South Korea"
-                className={`w-full px-4 py-3 rounded-2xl bg-[#F0F2F6] border-2 transition-all ${
+                className={`w-full px-5 py-4 rounded-[2.5rem] bg-white border border-white shadow-soft-out-sm transition-all ${
                   errors.location
                     ? 'border-[#FF6B81] focus:border-[#FF6B81]'
-                    : 'border-transparent focus:border-[#8B5CF6]'
-                } focus:outline-none shadow-soft-in text-sm`}
+                    : 'focus:border-[#8B5CF6]'
+                } focus:outline-none text-sm`}
               />
               {errors.location && (
                 <p className="mt-2 text-xs text-[#FF6B81] font-medium">

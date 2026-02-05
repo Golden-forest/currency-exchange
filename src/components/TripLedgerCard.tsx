@@ -181,8 +181,15 @@ export function TripLedgerCard() {
 
             {/* Traveler Avatars */}
             {settings && settings.travelers.length > 0 && (
-                <div className="mb-6">
+                <div className="flex justify-between items-center mb-6">
                     <TravelerAvatars travelers={settings.travelers} />
+                    <button
+                        onClick={() => setShowAddTransaction(true)}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 bg-[#FF6B81]"
+                        title="添加消费记录"
+                    >
+                        +
+                    </button>
                 </div>
             )}
 
@@ -226,7 +233,7 @@ export function TripLedgerCard() {
                                 {/* 交易列表 */}
                                 <div className="space-y-3">
                                     {group.transactions.map((t) => (
-                                        <div key={t.id} className="bg-white rounded-[2rem] p-4 flex items-center shadow-soft-out-sm border border-white/50">
+                                        <div key={t.id} className="bg-white rounded-[2.5rem] p-5 flex items-center border border-white">
                                             <div className="w-12 h-12 bg-[#F1F2F6] rounded-full flex items-center justify-center text-2xl mr-4">
                                                 {t.icon}
                                             </div>
@@ -266,16 +273,6 @@ export function TripLedgerCard() {
                     </div>
                 )}
             </div>
-
-            {/* Add Button */}
-            {settings && (
-                <button
-                    onClick={() => setShowAddTransaction(true)}
-                    className="absolute bottom-6 right-6 w-16 h-16 bg-gradient-to-tr from-[#FF6B81] to-[#FF9FF3] rounded-full shadow-lg flex items-center justify-center text-white text-4xl font-light active:scale-95 transition-transform hover:shadow-xl"
-                >
-                    +
-                </button>
-            )}
 
             {/* Modals */}
             {showSettings && (
