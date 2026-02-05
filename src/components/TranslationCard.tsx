@@ -8,8 +8,11 @@ import { speak, isSpeechSynthesisSupported } from '@/services/ttsService';
 import { LANGUAGE_NAMES } from '@/types/translation';
 import { debounce } from '@/utils/debounce';
 import { ALL_PHRASES } from '@/data/phraseLibrary';
-import type { Phrase } from '@/types/translation';
+import type { Phrase, TranslationHistory } from '@/types/translation';
 import { VoiceInputIndicator } from '@/components/TranslationCard/VoiceInputIndicator';
+import { QuickPhrasesModal } from '@/components/TranslationCard/QuickPhrasesModal';
+import { HistoryModal } from '@/components/TranslationCard/HistoryModal';
+import { TOAST_DURATION } from '@/constants/modal';
 
 /**
  * TranslationCard 组件
@@ -30,20 +33,33 @@ export function TranslationCard() {
   const {
     sourceText,
     setSourceText,
-    targetText,
+    targetText: hookTargetText,
     sourceLang,
+    setSourceLang,
     targetLang,
-    romanization,
+    setTargetLang,
+    romanization: hookRomanization,
     isLoading,
     error,
     translate,
     swapLanguages,
     clearError,
+    history,
+    clearHistory,
+    deleteHistoryItem,
   } = useTranslation({
     initialSourceLang: 'zh',
     initialTargetLang: 'ko',
     loadHistory: true,
   });
+
+  // 本地状态，用于覆盖 hook 返回的值（主要用于历史记录选择）
+  const [localTargetText, setLocalTargetText] = useState<string>('');
+  const [localRomanization, setLocalRomanization] = useState<string>('');
+
+  // 优先使用本地状态，如果没有则使用 hook 返回的值
+  const targetText = localTargetText || hookTargetText;
+  const romanization = localRomanization || hookRomanization;
 
   // ===== 语音识别状态 =====
 
@@ -77,6 +93,10 @@ export function TranslationCard() {
 
   /** 输入框引用 */
   const [inputValue, setInputValue] = useState('');
+
+  /** 弹窗打开状态 */
+  const [isQuickPhrasesOpen, setIsQuickPhrasesOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   /**
    * 快捷短语列表
@@ -116,7 +136,7 @@ export function TranslationCard() {
     setToast({ show: true, message });
     setTimeout(() => {
       setToast({ show: false, message: '' });
-    }, 2000);
+    }, TOAST_DURATION);
   }, []);
 
   /**
@@ -175,6 +195,10 @@ export function TranslationCard() {
     setSourceText(value);
     clearError();
 
+    // 清空本地状态（因为新的翻译会覆盖它们）
+    setLocalTargetText('');
+    setLocalRomanization('');
+
     // 实时翻译（debounce 500ms）
     if (value.trim()) {
       debouncedTranslate(value);
@@ -203,6 +227,9 @@ export function TranslationCard() {
     } else {
       setInputValue('');
     }
+    // 清空本地状态（因为 swapLanguages 会处理）
+    setLocalTargetText('');
+    setLocalRomanization('');
   }, [swapLanguages, targetText]);
 
   /**
@@ -238,6 +265,47 @@ export function TranslationCard() {
       startListening(sourceLang);
     }
   }, [isListening, sourceLang, isSupported, speechError, startListening, stopListening, showToast]);
+
+  // ===== Modal 回调函数 =====
+
+  /**
+   * 处理快捷短语选择
+   */
+  const handlePhraseSelect = useCallback((phrase: string) => {
+    setInputValue(phrase);
+    translate(phrase);
+    setIsQuickPhrasesOpen(false);
+  }, [translate]);
+
+  /**
+   * 处理历史记录选择
+   */
+  const handleHistorySelect = useCallback((item: TranslationHistory) => {
+    setSourceText(item.sourceText);
+    setInputValue(item.sourceText);
+    setLocalTargetText(item.targetText);
+    setLocalRomanization(item.romanization || '');
+    setSourceLang(item.sourceLang);
+    setTargetLang(item.targetLang);
+    setIsHistoryOpen(false);
+  }, [setSourceText, setSourceLang, setTargetLang]);
+
+  /**
+   * 处理删除历史记录
+   */
+  const handleDeleteHistoryItem = useCallback((id: string) => {
+    deleteHistoryItem(id);
+    showToast('已删除该条记录');
+  }, [deleteHistoryItem, showToast]);
+
+  /**
+   * 处理清空历史
+   */
+  const handleClearHistory = useCallback(() => {
+    clearHistory();
+    showToast('已清空所有历史记录');
+    setIsHistoryOpen(false);
+  }, [clearHistory, showToast]);
 
   // ===== 渲染辅助函数 =====
 
@@ -387,7 +455,11 @@ export function TranslationCard() {
             Translation
           </h2>
         </div>
-        <button className="w-12 h-12 bg-white rounded-full shadow-soft-out-sm flex items-center justify-center text-[#636E72] active:shadow-soft-in transition-all">
+        <button
+          onClick={() => setIsHistoryOpen(true)}
+          className="w-12 h-12 bg-white rounded-full shadow-soft-out-sm flex items-center justify-center text-[#636E72] active:shadow-soft-in transition-all"
+          title="查看历史记录"
+        >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -400,7 +472,10 @@ export function TranslationCard() {
           <span className="text-[11px] font-bold text-[#A4B0BE] tracking-wider uppercase">
             Quick Phrases
           </span>
-          <span className="text-[11px] font-bold text-[#1ABC9C] cursor-pointer hover:underline">
+          <span
+            onClick={() => setIsQuickPhrasesOpen(true)}
+            className="text-[11px] font-bold text-[#1ABC9C] cursor-pointer hover:underline"
+          >
             View All
           </span>
         </div>
@@ -554,6 +629,24 @@ export function TranslationCard() {
           <span className="text-sm font-medium">{toast.message}</span>
         </motion.div>
       )}
+
+      {/* 快捷短语弹窗 */}
+      <QuickPhrasesModal
+        isOpen={isQuickPhrasesOpen}
+        onClose={() => setIsQuickPhrasesOpen(false)}
+        onPhraseSelect={handlePhraseSelect}
+        showToast={showToast}
+      />
+
+      {/* 翻译历史弹窗 */}
+      <HistoryModal
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        history={history}
+        onDeleteItem={handleDeleteHistoryItem}
+        onClearAll={handleClearHistory}
+        onSelectHistory={handleHistorySelect}
+      />
     </div>
   );
 }
