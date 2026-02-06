@@ -14,7 +14,6 @@
 
 import type { Language, TranslationResult, TranslationHistory, Phrase } from '@/types/translation';
 import { fuzzyMatch, initPhraseIndex } from '@/utils/textMatcher';
-import { translateText as deepseekTranslate, clearTranslationCache } from '@/utils/deepseekTranslate';
 import { ALL_PHRASES } from '@/data/phraseLibrary';
 
 /**
@@ -70,8 +69,9 @@ const searchOfflinePhrases = (text: string, sourceLang: Language): Phrase | null
 };
 
 /**
- * 调用 DeepSeek Translate API
+ * 调用 DeepSeek Translate API (通过服务端代理)
  *
+ * @description 通过 Next.js API Route 调用 DeepSeek API，保护 API Key 不暴露给客户端
  * @param text 要翻译的文本
  * @param sourceLang 源语言
  * @param targetLang 目标语言
@@ -84,7 +84,29 @@ const callDeepSeekTranslate = async (
   targetLang: Language
 ): Promise<TranslationResult> => {
   try {
-    return await deepseekTranslate(text, sourceLang, targetLang);
+    const response = await fetch('/api/translate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text,
+        sourceLang,
+        targetLang,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `翻译服务错误: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return {
+      translatedText: result.translatedText,
+      romanization: result.romanization,
+      isOffline: false,
+    };
   } catch (error) {
     // 重新抛出错误，由上层处理
     throw error;
@@ -428,7 +450,6 @@ export const historyService = {
  * 清空所有缓存（包括翻译缓存和历史记录）
  */
 export const clearAllCaches = (): void => {
-  clearTranslationCache();
   clearHistory();
 };
 

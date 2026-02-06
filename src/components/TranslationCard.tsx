@@ -85,12 +85,24 @@ export function TranslationCard() {
       // 语音识别完成后，使用自动检测翻译
       setInputValue(transcript);
 
-      // 导入自动检测翻译函数
-      const { translateTextAutoDetect } = await import('@/utils/deepseekTranslate');
-
       try {
-        // 使用自动检测翻译
-        const result = await translateTextAutoDetect(transcript);
+        // 调用服务端 API 进行翻译
+        const response = await fetch('/api/translate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: transcript,
+            autoDetect: true,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('翻译服务不可用');
+        }
+
+        const result = await response.json();
 
         // 更新界面显示
         setSourceText(transcript);
@@ -107,8 +119,7 @@ export function TranslationCard() {
         }
       } catch (error) {
         console.error('自动检测翻译失败:', error);
-        // 降级到普通翻译
-        translate(transcript);
+        showToast('翻译失败,请重试');
       }
     },
   });
