@@ -6,7 +6,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { CurrencyConverterCard } from '@/components/CurrencyConverterCard';
 import { TripLedgerCard } from '@/components/TripLedgerCard';
 import { TranslationCard } from '@/components/TranslationCard';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { validateDeepSeekConfig } from '@/utils/deepseekTranslate';
 
 type CardType = 'converter' | 'ledger' | 'translation';
@@ -14,7 +14,6 @@ const CARDS: CardType[] = ['converter', 'ledger', 'translation'];
 
 export default function Home() {
   const [activeCardIndex, setActiveCardIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
 
   // 账本联动状态
   const [ledgerInitialRate, setLedgerInitialRate] = useState<number | undefined>(undefined);
@@ -23,12 +22,6 @@ export default function Home() {
   // 边界状态检测
   const isAtFirstCard = activeCardIndex === 0;
   const isAtLastCard = activeCardIndex === CARDS.length - 1;
-
-  // 手势冲突检测
-  const detectGesture = (offset: {x: number, y: number}): 'horizontal' | 'vertical' => {
-    const angle = Math.abs(Math.atan2(offset.y, offset.x) * 180 / Math.PI);
-    return angle < 30 || angle > 150 ? 'horizontal' : 'vertical';
-  };
 
   // 在应用启动时验证环境变量配置
   useEffect(() => {
@@ -99,33 +92,14 @@ export default function Home() {
     setLedgerAutoOpen(true);
 
     // 切换到账本卡片
-    setDirection(1);
     setActiveCardIndex(1);
   };
 
   const paginate = (newDirection: number) => {
     const nextIndex = activeCardIndex + newDirection;
     if (nextIndex >= 0 && nextIndex < CARDS.length) {
-      setDirection(newDirection);
       setActiveCardIndex(nextIndex);
     }
-  };
-
-  const variants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? '100%' : '-100%',
-      opacity: 0.5,
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? '100%' : '-100%',
-      opacity: 0.5,
-    }),
   };
 
   // 根据当前卡片获取对应的背景色
@@ -145,46 +119,38 @@ export default function Home() {
   return (
     <main className={`h-screen w-full ${getBackgroundGradient()} overflow-hidden flex flex-col items-center justify-center p-2 sm:p-4 relative touch-optimized`}>
 
-      <div className="w-full max-w-lg h-[92vh] relative perspective-1000">
-        <AnimatePresence initial={false} custom={direction}>
-          <motion.div
-            key={activeCardIndex}
-            custom={direction}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: {
-                type: "tween",
-                duration: 0.15,
-                ease: "easeOut"
-              },
-              opacity: { duration: 0.15, ease: "easeOut" }
-            }}
-            drag="x"
-            dragConstraints={
-              isAtFirstCard || isAtLastCard
-                ? { left: -50, right: 50 }
-                : { left: 0, right: 0 }
-            }
-            dragElastic={0.05}
-            dragTransition={{
-              timeConstant: 50
-            }}
-            onDragEnd={(e, { offset, velocity }) => {
-              const swipeConfidenceThreshold = 60;      // 降低阈值
-              const swipe = offset.x;
-
-              if (swipe < -swipeConfidenceThreshold) {
-                paginate(1);
-              } else if (swipe > swipeConfidenceThreshold) {
-                paginate(-1);
+      <div className="w-full max-w-lg h-[92vh] relative">
+        {/* 使用 layoutId 实现平滑过渡，无需 AnimatePresence */}
+        <motion.div
+          layoutId="card-container"
+          className="absolute inset-0 w-full h-full"
+          transition={{
+            type: "spring",
+            stiffness: 400,
+            damping: 30,
+          }}
+        >
+          {activeCardIndex === 0 && (
+            <motion.div
+              drag="x"
+              dragConstraints={
+                isAtFirstCard || isAtLastCard
+                  ? { left: -50, right: 50 }
+                  : { left: 0, right: 0 }
               }
-            }}
-            className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing"
-          >
-            {activeCardIndex === 0 && (
+              dragElastic={0.1}
+              onDragEnd={(e, { offset, velocity }) => {
+                const swipeConfidenceThreshold = 50;
+                const swipe = offset.x;
+
+                if (swipe < -swipeConfidenceThreshold) {
+                  paginate(1);
+                } else if (swipe > swipeConfidenceThreshold) {
+                  paginate(-1);
+                }
+              }}
+              className="w-full h-full cursor-grab active:cursor-grabbing"
+            >
               <CurrencyConverterCard
                 cnyAmount={cnyAmount}
                 krwAmount={krwAmount}
@@ -196,23 +162,66 @@ export default function Home() {
                 setLastEdited={setLastEdited}
                 onAddToLedger={handleAddToLedger}
               />
-            )}
-            {activeCardIndex === 1 && (
+            </motion.div>
+          )}
+          {activeCardIndex === 1 && (
+            <motion.div
+              drag="x"
+              dragConstraints={
+                isAtFirstCard || isAtLastCard
+                  ? { left: -50, right: 50 }
+                  : { left: 0, right: 0 }
+              }
+              dragElastic={0.1}
+              onDragEnd={(e, { offset, velocity }) => {
+                const swipeConfidenceThreshold = 50;
+                const swipe = offset.x;
+
+                if (swipe < -swipeConfidenceThreshold) {
+                  paginate(1);
+                } else if (swipe > swipeConfidenceThreshold) {
+                  paginate(-1);
+                }
+              }}
+              className="w-full h-full cursor-grab active:cursor-grabbing"
+            >
               <TripLedgerCard
                 initialRate={ledgerInitialRate}
                 autoOpenAddModal={ledgerAutoOpen}
                 onModalOpenStateChanged={(isOpen) => {
-                  // 当 modal 关闭时,重置自动打开标志
                   if (!isOpen) {
                     setLedgerAutoOpen(false);
                     setLedgerInitialRate(undefined);
                   }
                 }}
               />
-            )}
-            {activeCardIndex === 2 && <TranslationCard />}
-          </motion.div>
-        </AnimatePresence>
+            </motion.div>
+          )}
+          {activeCardIndex === 2 && (
+            <motion.div
+              drag="x"
+              dragConstraints={
+                isAtFirstCard || isAtLastCard
+                  ? { left: -50, right: 50 }
+                  : { left: 0, right: 0 }
+              }
+              dragElastic={0.1}
+              onDragEnd={(e, { offset, velocity }) => {
+                const swipeConfidenceThreshold = 50;
+                const swipe = offset.x;
+
+                if (swipe < -swipeConfidenceThreshold) {
+                  paginate(1);
+                } else if (swipe > swipeConfidenceThreshold) {
+                  paginate(-1);
+                }
+              }}
+              className="w-full h-full cursor-grab active:cursor-grabbing"
+            >
+              <TranslationCard />
+            </motion.div>
+          )}
+        </motion.div>
       </div>
 
       {/* Pagination Dots */}
@@ -220,10 +229,7 @@ export default function Home() {
         {CARDS.map((_, i) => (
           <div
             key={i}
-            onClick={() => {
-              setDirection(i > activeCardIndex ? 1 : -1);
-              setActiveCardIndex(i);
-            }}
+            onClick={() => setActiveCardIndex(i)}
             className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
               activeCardIndex === i
                 ? 'bg-[#8B5CF6] w-6 shadow-glow-primary'
