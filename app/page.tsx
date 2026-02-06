@@ -16,6 +16,12 @@ export default function Home() {
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [direction, setDirection] = useState(0);
 
+  // 手势冲突检测
+  const detectGesture = (offset: {x: number, y: number}): 'horizontal' | 'vertical' => {
+    const angle = Math.abs(Math.atan2(offset.y, offset.x) * 180 / Math.PI);
+    return angle < 30 || angle > 150 ? 'horizontal' : 'vertical';
+  };
+
   // 在应用启动时验证环境变量配置
   useEffect(() => {
     const configValidation = validateDeepSeekConfig();
@@ -88,21 +94,21 @@ export default function Home() {
 
   const variants = {
     enter: (direction: number) => ({
-      y: direction > 0 ? '100%' : '-100%',
+      x: direction > 0 ? '100%' : '-100%',  // 改为 x 轴
       opacity: 0,
-      scale: 0.9,
+      scale: 0.95,
     }),
     center: {
       zIndex: 1,
-      y: 0,
+      x: 0,
       opacity: 1,
       scale: 1,
     },
     exit: (direction: number) => ({
       zIndex: 0,
-      y: direction < 0 ? '100%' : '-100%',
+      x: direction < 0 ? '100%' : '-100%',  // 改为 x 轴
       opacity: 0,
-      scale: 0.9,
+      scale: 0.95,
     }),
   };
 
@@ -133,18 +139,31 @@ export default function Home() {
             animate="center"
             exit="exit"
             transition={{
-              y: { type: "spring", stiffness: 300, damping: 30 },
-              opacity: { duration: 0.3 },
-              scale: { duration: 0.4 }
+              x: {
+                type: "spring",
+                stiffness: 400,      // 增加刚度
+                damping: 25,         // 优化阻尼
+                mass: 0.5            // 添加质量
+              },
+              opacity: { duration: 0.25, ease: "easeOut" },
+              scale: { duration: 0.35, ease: "easeInOut" }
             }}
-            drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={0.2}
+            drag="x"                                    // 改为横向
+            dragConstraints={{ left: 0, right: 0 }}     // 水平约束
+            dragElastic={0.35}                          // 增加弹性
+            dragTransition={{
+              bounceDamping: 20,
+              bounceStiffness: 300,
+              power: 0.3,
+              timeConstant: 200
+            }}
             onDragEnd={(e, { offset, velocity }) => {
-              const swipe = offset.y;
-              if (swipe < -100) {
+              const swipeConfidenceThreshold = 60;      // 降低阈值
+              const swipe = offset.x;
+
+              if (swipe < -swipeConfidenceThreshold) {
                 paginate(1);
-              } else if (swipe > 100) {
+              } else if (swipe > swipeConfidenceThreshold) {
                 paginate(-1);
               }
             }}
@@ -169,7 +188,7 @@ export default function Home() {
       </div>
 
       {/* Pagination Dots */}
-      <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-30">
         {CARDS.map((_, i) => (
           <div
             key={i}
@@ -177,8 +196,11 @@ export default function Home() {
               setDirection(i > activeCardIndex ? 1 : -1);
               setActiveCardIndex(i);
             }}
-            className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${activeCardIndex === i ? 'bg-[#8B5CF6] h-6 shadow-glow-primary' : 'bg-[#D1D9E6]'
-              }`}
+            className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
+              activeCardIndex === i
+                ? 'bg-[#8B5CF6] w-6 shadow-glow-primary'
+                : 'bg-[#D1D9E6]'
+            }`}
           />
         ))}
       </div>
