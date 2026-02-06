@@ -13,6 +13,8 @@ const EMOJI_OPTIONS = [
   '💰', '🏧', '🏪', '⛽', '🚩', '📍'
 ];
 
+type Currency = 'KRW' | 'CNY';
+
 type Props = {
   travelers: string[];
   currentRate: number;
@@ -28,6 +30,7 @@ export const AddTransactionModal = React.memo(({
 }: Props) => {
   // 表单状态
   const [merchantName, setMerchantName] = useState('');
+  const [currency, setCurrency] = useState<Currency>('KRW');
   const [amountKRW, setAmountKRW] = useState('');
   const [amountCNY, setAmountCNY] = useState('');
   const [payer, setPayer] = useState('');
@@ -73,18 +76,37 @@ export const AddTransactionModal = React.memo(({
     }
   }, [travelers, treatedBy]);
 
-  // 处理KRW金额变化
-  const handleKRWChange = (value: string) => {
-    setAmountKRW(value);
+  // 处理金额变化 (支持双向转换)
+  const handleAmountChange = (value: string, selectedCurrency: Currency) => {
+    const amount = parseFloat(value);
 
-    // 实时转换CNY
-    const krwAmount = parseFloat(value);
-    if (!isNaN(krwAmount) && krwAmount > 0 && currentRate) {
-      const cnyAmount = exchangeService.krwToCny(krwAmount);
-      setAmountCNY(cnyAmount.toFixed(2));
-      setErrors(prev => ({ ...prev, amount: undefined }));
+    if (!isNaN(amount) && amount > 0 && currentRate) {
+      try {
+        if (selectedCurrency === 'KRW') {
+          // 输入的是韩元,计算人民币
+          setAmountKRW(value);
+          const cnyAmount = exchangeService.krwToCny(amount);
+          setAmountCNY(cnyAmount.toFixed(2));
+        } else {
+          // 输入的是人民币,计算韩元
+          setAmountCNY(value);
+          const krwAmount = exchangeService.cnyToKrw(amount);
+          setAmountKRW(Math.round(krwAmount).toString());
+        }
+        setErrors(prev => ({ ...prev, amount: undefined }));
+      } catch (error) {
+        console.error('货币转换失败:', error);
+        setErrors(prev => ({ ...prev, amount: '汇率不可用' }));
+      }
     } else {
-      setAmountCNY('');
+      // 清空输入
+      if (selectedCurrency === 'KRW') {
+        setAmountKRW(value);
+        setAmountCNY('');
+      } else {
+        setAmountCNY(value);
+        setAmountKRW('');
+      }
     }
   };
 
@@ -113,9 +135,14 @@ export const AddTransactionModal = React.memo(({
       newErrors.merchantName = '请输入商家名称';
     }
 
-    // 验证金额
+    // 验证金额 (至少有一个币种有值)
     const krwAmount = parseFloat(amountKRW);
-    if (!amountKRW || isNaN(krwAmount) || krwAmount <= 0) {
+    const cnyAmount = parseFloat(amountCNY);
+    const hasValidAmount =
+      (amountKRW && !isNaN(krwAmount) && krwAmount > 0) ||
+      (amountCNY && !isNaN(cnyAmount) && cnyAmount > 0);
+
+    if (!hasValidAmount) {
       newErrors.amount = '请输入有效的金额';
     }
 
@@ -251,15 +278,43 @@ export const AddTransactionModal = React.memo(({
             {/* 金额 */}
             <div>
               <label className="block text-sm font-bold text-[#2D3436] mb-2">
-                金额 (KRW) <span className="text-[#FF6B81]">*</span>
+                金额 <span className="text-[#FF6B81]">*</span>
               </label>
+
+              {/* 币种选择 */}
+              <div className="flex gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setCurrency('KRW')}
+                  className={`flex-1 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                    currency === 'KRW'
+                      ? 'bg-gradient-to-r from-[#FF6B81] to-[#FF9FF3] text-white shadow-lg'
+                      : 'bg-[#F0F2F6] text-[#636E72] hover:bg-[#E9EDF2]'
+                  }`}
+                >
+                  KRW (韩元)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrency('CNY')}
+                  className={`flex-1 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                    currency === 'CNY'
+                      ? 'bg-gradient-to-r from-[#FF6B81] to-[#FF9FF3] text-white shadow-lg'
+                      : 'bg-[#F0F2F6] text-[#636E72] hover:bg-[#E9EDF2]'
+                  }`}
+                >
+                  CNY (人民币)
+                </button>
+              </div>
+
               <div className="space-y-2">
+                {/* 主输入框 */}
                 <div className="relative">
                   <input
                     type="number"
-                    value={amountKRW}
-                    onChange={(e) => handleKRWChange(e.target.value)}
-                    placeholder="例如: 15000"
+                    value={currency === 'KRW' ? amountKRW : amountCNY}
+                    onChange={(e) => handleAmountChange(e.target.value, currency)}
+                    placeholder={currency === 'KRW' ? '例如: 15000' : '例如: 80'}
                     className={`w-full px-5 py-4 pl-12 pr-4 rounded-[2.5rem] bg-white border border-white shadow-soft-out-sm transition-all ${
                       errors.amount
                         ? 'border-[#FF6B81] focus:border-[#FF6B81]'
@@ -267,14 +322,24 @@ export const AddTransactionModal = React.memo(({
                     } focus:outline-none text-sm`}
                   />
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-[#636E72]">
-                    ₩
+                    {currency === 'KRW' ? '₩' : '¥'}
                   </span>
                 </div>
-                {amountCNY && (
+
+                {/* 实时转换显示 */}
+                {currency === 'KRW' && amountCNY && (
                   <div className="px-4 py-2 rounded-xl bg-[#E9EDF2] flex items-center justify-between">
                     <span className="text-sm text-[#636E72]">≈</span>
                     <span className="text-sm font-bold text-[#2D3436]">
                       ¥ {amountCNY} CNY
+                    </span>
+                  </div>
+                )}
+                {currency === 'CNY' && amountKRW && (
+                  <div className="px-4 py-2 rounded-xl bg-[#E9EDF2] flex items-center justify-between">
+                    <span className="text-sm text-[#636E72]">≈</span>
+                    <span className="text-sm font-bold text-[#2D3436]">
+                      ₩ {amountKRW} KRW
                     </span>
                   </div>
                 )}
