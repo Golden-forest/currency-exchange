@@ -13,6 +13,7 @@ import { VoiceInputIndicator } from '@/components/TranslationCard/VoiceInputIndi
 import { QuickPhrasesModal } from '@/components/TranslationCard/QuickPhrasesModal';
 import { HistoryModal } from '@/components/TranslationCard/HistoryModal';
 import { TOAST_DURATION } from '@/constants/modal';
+import { AnimatedButton } from '@/components/ui';
 
 /**
  * TranslationCard 组件
@@ -617,17 +618,17 @@ export function TranslationCard() {
         {/* 操作按钮 */}
         <div className="absolute right-6 bottom-6 flex gap-3">
           {/* 复制按钮 */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <AnimatedButton
+            variant="secondary"
+            size="sm"
             onClick={handleCopy}
-            className="w-11 h-11 bg-white rounded-2xl flex items-center justify-center text-[#64748B] shadow-soft-out-sm border border-gray-50 active:shadow-soft-in"
+            className="w-11 h-11 p-0 flex items-center justify-center"
             title="复制"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
-          </motion.button>
+          </AnimatedButton>
 
           {/* 播放按钮 */}
           <motion.button
