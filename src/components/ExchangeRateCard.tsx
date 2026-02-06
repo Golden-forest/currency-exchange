@@ -59,14 +59,14 @@ export function ExchangeRateCard() {
           {/* 主汇率 */}
           <div className="flex items-baseline justify-center gap-1">
             <span className="text-text-secondary text-xs">1 KRW =</span>
-            <span className="text-text-primary text-sm font-bold">{formatRate(rate)}</span>
+            <span className="text-text-primary text-sm font-bold">{rate ? formatRate(rate) : '-'}</span>
             <span className="text-text-secondary text-xs">CNY</span>
           </div>
 
           {/* 反向汇率 */}
           <div className="flex items-baseline justify-center gap-1">
             <span className="text-text-secondary text-[10px]">1 CNY ≈</span>
-            <span className="text-text-secondary text-xs font-semibold">{formatReverseRate(rate)}</span>
+            <span className="text-text-secondary text-xs font-semibold">{rate ? formatReverseRate(rate) : '-'}</span>
             <span className="text-text-secondary text-[10px]">KRW</span>
           </div>
 
