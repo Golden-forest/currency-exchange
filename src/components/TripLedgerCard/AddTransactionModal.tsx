@@ -14,6 +14,7 @@ const EMOJI_OPTIONS = [
 ];
 
 type Currency = 'KRW' | 'CNY';
+type ButtonState = 'normal' | 'submitting' | 'success';
 
 type Props = {
   travelers: string[];
@@ -38,6 +39,9 @@ export const AddTransactionModal = React.memo(({
   const [splitAmong, setSplitAmong] = useState<string[]>([]);
   const [treatedBy, setTreatedBy] = useState('');
   const [icon, setIcon] = useState('💰');
+
+  // 按钮状态
+  const [buttonState, setButtonState] = useState<ButtonState>('normal');
 
   // 验证错误
   const [errors, setErrors] = useState<{
@@ -183,27 +187,51 @@ export const AddTransactionModal = React.memo(({
   };
 
   // 添加交易
-  const handleAdd = () => {
+  const handleAdd = async () => {
+    // 1. 验证表单
     if (!validateForm()) {
       return;
     }
 
-    const krwAmount = parseFloat(amountKRW);
-    const cnyAmount = parseFloat(amountCNY);
+    // 2. 设置为 submitting,禁用按钮
+    setButtonState('submitting');
 
-    const transaction: Omit<Transaction, 'id' | 'timestamp' | 'date'> = {
-      name: merchantName.trim(),
-      amountKRW: krwAmount,
-      amountCNY: cnyAmount,
-      payer,
-      splitType,
-      icon,
-      // 根据分摊类型添加相应字段
-      ...(splitType === 'even' && { splitAmong }),
-      ...(splitType === 'treat' && { treatedBy }),
-    };
+    try {
+      const krwAmount = parseFloat(amountKRW);
+      const cnyAmount = parseFloat(amountCNY);
 
-    onAdd(transaction);
+      const transaction: Omit<Transaction, 'id' | 'timestamp' | 'date'> = {
+        name: merchantName.trim(),
+        amountKRW: krwAmount,
+        amountCNY: cnyAmount,
+        payer,
+        splitType,
+        icon,
+        // 根据分摊类型添加相应字段
+        ...(splitType === 'even' && { splitAmong }),
+        ...(splitType === 'treat' && { treatedBy }),
+      };
+
+      // 3. 模拟异步操作 (添加短暂延迟以显示动画)
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // 4. 执行添加操作
+      onAdd(transaction);
+
+      // 5. 设置为 success
+      setButtonState('success');
+
+      // 6. 1秒后恢复,且不清空表单,不关闭 modal
+      setTimeout(() => {
+        setButtonState('normal');
+        // 注意: 不调用 onClose(),留在当前页面
+      }, 1000);
+
+    } catch (error) {
+      // 错误处理
+      console.error('添加交易失败:', error);
+      setButtonState('normal');
+    }
   };
 
   // 处理背景点击关闭
@@ -212,6 +240,34 @@ export const AddTransactionModal = React.memo(({
       onClose();
     }
   };
+
+  // 打勾动画组件
+  const CheckAnimation = () => (
+    <motion.div
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      transition={{
+        type: "spring",
+        stiffness: 200,
+        damping: 10
+      }}
+      className="flex items-center justify-center"
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24">
+        <motion.path
+          d="M5 13l4 4L19 7"
+          stroke="white"
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        />
+      </svg>
+    </motion.div>
+  );
 
   return (
     <AnimatePresence>
@@ -521,16 +577,30 @@ export const AddTransactionModal = React.memo(({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 rounded-2xl bg-[#F0F2F6] text-[#636E72] font-bold text-sm hover:bg-[#E9EDF2] active:scale-95 transition-all"
+              disabled={buttonState !== 'normal'}
+              className={`flex-1 px-6 py-3 rounded-2xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                buttonState === 'normal'
+                  ? 'bg-[#F0F2F6] text-[#636E72] hover:bg-[#E9EDF2] active:scale-95'
+                  : 'bg-[#F0F2F6] text-[#636E72] cursor-not-allowed'
+              }`}
             >
               取消
             </button>
             <button
               type="button"
               onClick={handleAdd}
-              className="flex-1 px-6 py-3 rounded-2xl bg-gradient-to-r from-[#FF6B81] to-[#FF9FF3] text-white font-bold text-sm shadow-lg hover:shadow-xl active:scale-95 transition-all"
+              disabled={buttonState !== 'normal'}
+              className={`flex-1 px-6 py-3 rounded-2xl font-bold text-sm shadow-lg transition-all ${
+                buttonState === 'normal'
+                  ? 'bg-gradient-to-r from-[#FF6B81] to-[#FF9FF3] text-white hover:shadow-xl active:scale-95'
+                  : buttonState === 'submitting'
+                  ? 'bg-gradient-to-r from-[#FF6B81] to-[#FF9FF3] text-white opacity-70 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-green-400 to-green-500 text-white'
+              }`}
             >
-              添加记录
+              {buttonState === 'normal' && '添加记录'}
+              {buttonState === 'submitting' && '添加中...'}
+              {buttonState === 'success' && <CheckAnimation />}
             </button>
           </div>
         </motion.div>
