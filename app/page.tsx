@@ -16,6 +16,10 @@ export default function Home() {
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [direction, setDirection] = useState(0);
 
+  // 账本联动状态
+  const [ledgerInitialRate, setLedgerInitialRate] = useState<number | undefined>(undefined);
+  const [ledgerAutoOpen, setLedgerAutoOpen] = useState(false);
+
   // 边界状态检测
   const isAtFirstCard = activeCardIndex === 0;
   const isAtLastCard = activeCardIndex === CARDS.length - 1;
@@ -88,6 +92,17 @@ export default function Home() {
     setKrwAmount(0);
   };
 
+  // 处理从汇率卡片添加到账本
+  const handleAddToLedger = (rate: number) => {
+    // 设置初始汇率和自动打开标志
+    setLedgerInitialRate(rate);
+    setLedgerAutoOpen(true);
+
+    // 切换到账本卡片
+    setDirection(1);
+    setActiveCardIndex(1);
+  };
+
   const paginate = (newDirection: number) => {
     const nextIndex = activeCardIndex + newDirection;
     if (nextIndex >= 0 && nextIndex < CARDS.length) {
@@ -98,21 +113,18 @@ export default function Home() {
 
   const variants = {
     enter: (direction: number) => ({
-      x: direction > 0 ? '100%' : '-100%',  // 改为 x 轴
-      opacity: 0,
-      scale: 0.95,
+      x: direction > 0 ? '100%' : '-100%',
+      opacity: 0.5,
     }),
     center: {
       zIndex: 1,
       x: 0,
       opacity: 1,
-      scale: 1,
     },
     exit: (direction: number) => ({
       zIndex: 0,
-      x: direction < 0 ? '100%' : '-100%',  // 改为 x 轴
-      opacity: 0,
-      scale: 0.95,
+      x: direction < 0 ? '100%' : '-100%',
+      opacity: 0.5,
     }),
   };
 
@@ -144,13 +156,11 @@ export default function Home() {
             exit="exit"
             transition={{
               x: {
-                type: "spring",
-                stiffness: 400,      // 增加刚度
-                damping: 25,         // 优化阻尼
-                mass: 0.5            // 添加质量
+                type: "tween",
+                duration: 0.15,
+                ease: "easeOut"
               },
-              opacity: { duration: 0.25, ease: "easeOut" },
-              scale: { duration: 0.35, ease: "easeInOut" }
+              opacity: { duration: 0.15, ease: "easeOut" }
             }}
             drag="x"                                    // 改为横向
             dragConstraints={
@@ -187,16 +197,29 @@ export default function Home() {
                 onClear={handleClear}
                 lastEdited={lastEdited}
                 setLastEdited={setLastEdited}
+                onAddToLedger={handleAddToLedger}
               />
             )}
-            {activeCardIndex === 1 && <TripLedgerCard />}
+            {activeCardIndex === 1 && (
+              <TripLedgerCard
+                initialRate={ledgerInitialRate}
+                autoOpenAddModal={ledgerAutoOpen}
+                onModalOpenStateChanged={(isOpen) => {
+                  // 当 modal 关闭时,重置自动打开标志
+                  if (!isOpen) {
+                    setLedgerAutoOpen(false);
+                    setLedgerInitialRate(undefined);
+                  }
+                }}
+              />
+            )}
             {activeCardIndex === 2 && <TranslationCard />}
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Pagination Dots */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-30">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 z-30 opacity-40">
         {CARDS.map((_, i) => (
           <div
             key={i}

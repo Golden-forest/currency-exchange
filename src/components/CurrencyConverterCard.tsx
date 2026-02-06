@@ -16,6 +16,7 @@ interface CurrencyConverterCardProps {
     onClear: () => void;
     lastEdited: 'cny' | 'krw';
     setLastEdited: (val: 'cny' | 'krw') => void;
+    onAddToLedger?: (rate: number) => void;
 }
 
 export function CurrencyConverterCard({
@@ -26,7 +27,8 @@ export function CurrencyConverterCard({
     onQuickSelect,
     onClear,
     lastEdited,
-    setLastEdited
+    setLastEdited,
+    onAddToLedger
 }: CurrencyConverterCardProps) {
     const [editingCard, setEditingCard] = useState<'cny' | 'krw' | null>(null);
 
@@ -103,7 +105,7 @@ export function CurrencyConverterCard({
 
             {/* Local Rate Info */}
             <div className="mt-4">
-                <ExchangeRateCard />
+                <ExchangeRateCard onAddToLedger={onAddToLedger} />
             </div>
         </div>
     );

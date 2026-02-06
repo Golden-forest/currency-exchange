@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TravelerAvatars } from './TripLedgerCard/TravelerAvatars';
 import { SettingsModal } from './TripLedgerCard/SettingsModal';
@@ -11,13 +11,37 @@ import { groupTransactionsByDate, calculateSettlement } from '@/utils/tripCalcul
 import { generateTransactionId } from '@/utils/idGenerator';
 import type { TripSettings, Transaction } from '@/types/trip';
 
-export function TripLedgerCard() {
+type Props = {
+  initialRate?: number;
+  autoOpenAddModal?: boolean;
+  onModalOpenStateChanged?: (isOpen: boolean) => void;
+};
+
+export function TripLedgerCard({
+  initialRate,
+  autoOpenAddModal = false,
+  onModalOpenStateChanged
+}: Props) {
     // 状态管理
     const [settings, setSettings] = useLocalStorage<TripSettings | null>('tripSettings', null);
     const [transactions, setTransactions] = useLocalStorage<Transaction[]>('tripTransactions', []);
     const [showSettings, setShowSettings] = useState(false);
     const [showAddTransaction, setShowAddTransaction] = useState(false);
     const [showSettlement, setShowSettlement] = useState(false);
+
+    // 处理自动打开 modal
+    useEffect(() => {
+        if (autoOpenAddModal && settings) {
+            setShowAddTransaction(true);
+        }
+    }, [autoOpenAddModal, settings]);
+
+    // 通知父组件 modal 状态变化
+    useEffect(() => {
+        if (onModalOpenStateChanged) {
+            onModalOpenStateChanged(showAddTransaction);
+        }
+    }, [showAddTransaction, onModalOpenStateChanged]);
 
     // 计算总支出
     const totalSpent = transactions.reduce((sum, t) => sum + t.amountKRW, 0);
@@ -286,7 +310,7 @@ export function TripLedgerCard() {
             {showAddTransaction && settings && (
                 <AddTransactionModal
                     travelers={settings.travelers}
-                    currentRate={settings.currentRate}
+                    currentRate={initialRate || settings.currentRate}
                     onAdd={handleAddTransaction}
                     onClose={() => setShowAddTransaction(false)}
                 />

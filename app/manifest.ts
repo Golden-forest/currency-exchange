@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: '韩币人民币汇率换算',
-    short_name: '汇率换算',
-    description: '韩币和人民币实时汇率换算工具',
+    name: 'Road to Freedom',
+    short_name: 'Road to Freedom',
+    description: 'Road to Freedom - 韩币和人民币实时汇率换算工具',
     start_url: '/',
     display: 'standalone',
     background_color: '#0A0A0A',

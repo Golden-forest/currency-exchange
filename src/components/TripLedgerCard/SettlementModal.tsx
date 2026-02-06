@@ -69,8 +69,8 @@ export const SettlementModal = React.memo(({ report, onClose, onClear }: Props) 
           {/* 算账报告表格 */}
           <div className="space-y-4 mb-8">
             {/* 表头 */}
-            <div className="grid grid-cols-4 gap-4 px-6 py-3 bg-[#F0F2F6] rounded-2xl">
-              <div className="text-sm font-bold text-[#2D3436]">旅行者</div>
+            <div className="grid grid-cols-4 gap-4 px-6 py-3 bg-[#F0F2F6] rounded-2xl items-center">
+              <div className="text-sm font-bold text-[#2D3436] text-center">旅行者</div>
               <div className="text-sm font-bold text-[#2D3436] text-right">已付金额</div>
               <div className="text-sm font-bold text-[#2D3436] text-right">应付金额</div>
               <div className="text-sm font-bold text-[#2D3436] text-right">净额</div>
@@ -88,7 +88,7 @@ export const SettlementModal = React.memo(({ report, onClose, onClear }: Props) 
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3 }}
-                  className={`grid grid-cols-4 gap-4 px-6 py-4 rounded-2xl transition-all ${
+                  className={`grid grid-cols-4 gap-4 px-6 py-4 rounded-2xl transition-all items-center ${
                     settled
                       ? 'bg-[#F0F2F6]'
                       : shouldReceive
@@ -96,48 +96,45 @@ export const SettlementModal = React.memo(({ report, onClose, onClear }: Props) 
                       : 'bg-red-50'
                   }`}
                 >
-                  {/* 旅行者 */}
-                  <div className="flex items-center gap-3">
+                  {/* 旅行者头像 */}
+                  <div className="flex items-center justify-center">
                     <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
                       style={{ backgroundColor: item.color }}
                     >
                       {item.traveler.slice(-1)}
                     </div>
-                    <span className="text-sm font-bold text-[#2D3436]">
-                      {item.traveler}
-                    </span>
                   </div>
 
                   {/* 已付金额 */}
-                  <div className="text-right">
-                    <div className="text-sm font-bold text-[#636E72]">
+                  <div className="flex items-center justify-end">
+                    <span className="text-sm font-bold text-[#636E72]">
                       {formatAmount(item.totalPaid)}
-                    </div>
+                    </span>
                   </div>
 
                   {/* 应付金额 */}
-                  <div className="text-right">
-                    <div className="text-sm font-bold text-[#636E72]">
+                  <div className="flex items-center justify-end">
+                    <span className="text-sm font-bold text-[#636E72]">
                       {formatAmount(item.totalShare)}
-                    </div>
+                    </span>
                   </div>
 
                   {/* 净额 */}
-                  <div className="text-right">
+                  <div className="flex items-center justify-end">
                     {settled ? (
-                      <div className="text-sm font-bold text-[#636E72]">
+                      <span className="text-sm font-bold text-[#636E72]">
                         已结清
-                      </div>
+                      </span>
                     ) : shouldReceive ? (
-                      <div>
+                      <div className="text-right">
                         <div className="text-xs text-purple-500 mb-1">应收</div>
                         <div className="text-sm font-bold text-purple-500">
                           {formatAmount(Math.abs(item.balance))}
                         </div>
                       </div>
                     ) : (
-                      <div>
+                      <div className="text-right">
                         <div className="text-xs text-red-500 mb-1">应付</div>
                         <div className="text-sm font-bold text-red-500">
                           {formatAmount(item.balance)}
