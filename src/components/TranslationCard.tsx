@@ -508,7 +508,7 @@ export function TranslationCard() {
     <div className="flex items-center justify-center h-full">
       <div className="flex flex-col items-center gap-3">
         <motion.div
-          className="w-12 h-12 border-4 border-[#1ABC9C] border-t-transparent rounded-full"
+          className="w-12 h-12 border-4 border-[#0EA5E9] border-t-transparent rounded-full"
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
         />
@@ -531,7 +531,7 @@ export function TranslationCard() {
         <span className="text-sm font-medium text-red-500">{error}</span>
         <button
           onClick={clearError}
-          className="text-xs font-bold text-[#1ABC9C] hover:underline"
+          className="text-xs font-bold text-[#0EA5E9] hover:underline"
         >
           关闭
         </button>
@@ -569,7 +569,7 @@ export function TranslationCard() {
     return (
       <div className="h-full flex flex-col justify-center relative">
         {/* 翻译结果 */}
-        <div className="text-3xl sm:text-4xl font-extrabold text-[#065F46] mb-2 tracking-tight">
+        <div className="text-3xl sm:text-4xl font-extrabold text-[#0369A1] mb-2 tracking-tight">
           {targetText}
         </div>
 
@@ -601,7 +601,7 @@ export function TranslationCard() {
             whileTap={{ scale: 0.95 }}
             onClick={handlePlay}
             disabled={isPlaying}
-            className="w-11 h-11 bg-[#1ABC9C] rounded-full flex items-center justify-center text-white shadow-glow-primary active:scale-95 transition-transform disabled:opacity-50"
+            className="w-11 h-11 bg-[#0EA5E9] rounded-full flex items-center justify-center text-white shadow-glow-primary active:scale-95 transition-transform disabled:opacity-50"
             title="播放"
           >
             {isPlaying ? (
@@ -640,7 +640,7 @@ export function TranslationCard() {
       {/* Header */}
       <div className="flex justify-between items-start mb-4 px-2">
         <div>
-          <div className="text-[10px] sm:text-[11px] font-bold text-[#1ABC9C] tracking-[0.2em] uppercase mb-1">
+          <div className="text-[10px] sm:text-[11px] font-bold text-[#0EA5E9] tracking-[0.2em] uppercase mb-1">
             TRAVEL ASSISTANT
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#2D3436] tracking-tight">
@@ -666,7 +666,7 @@ export function TranslationCard() {
           </span>
           <span
             onClick={() => setIsQuickPhrasesOpen(true)}
-            className="text-[11px] font-bold text-[#1ABC9C] cursor-pointer hover:underline"
+            className="text-[11px] font-bold text-[#0EA5E9] cursor-pointer hover:underline"
           >
             View All
           </span>
@@ -679,9 +679,9 @@ export function TranslationCard() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleQuickPhrase(phrase)}
-              className="bg-white/90 rounded-[2.5rem] p-3 flex items-center shadow-soft-out-sm flex-shrink-0 min-w-[140px] border border-white cursor-pointer"
+              className="bg-white/90 rounded-[2.5rem] p-3 flex items-center flex-shrink-0 min-w-[140px] border border-white cursor-pointer"
             >
-              <div className="text-[#1ABC9C] text-[10px] mr-2.5">▶</div>
+              <div className="text-[#0EA5E9] text-[10px] mr-2.5">▶</div>
               <div>
                 <div className="font-bold text-[#2D3436] text-xs sm:text-sm">{phrase.zh}</div>
                 <div className="text-[9px] sm:text-[10px] text-[#A4B0BE] font-medium">{phrase.romanization}</div>
@@ -706,7 +706,7 @@ export function TranslationCard() {
             whileHover={{ scale: 1.1, rotate: 180 }}
             whileTap={{ scale: 0.9 }}
             onClick={handleSwapLanguages}
-            className="w-10 h-10 bg-[#1ABC9C] rounded-full shadow-glow-primary flex items-center justify-center text-white cursor-pointer"
+            className="w-10 h-10 bg-[#0EA5E9] rounded-full shadow-glow-primary flex items-center justify-center text-white cursor-pointer"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -724,13 +724,13 @@ export function TranslationCard() {
 
       {/* Text Input Card */}
       <div className="px-1 mb-4">
-        <div className="bg-white rounded-[2.5rem] p-4 sm:p-5 shadow-soft-out-sm relative min-h-[100px]">
+        <div className="bg-white rounded-[3rem] p-4 sm:p-5 shadow-soft-out-sm relative min-h-[100px]">
           <textarea
             value={inputValue}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            placeholder="请输入要翻译的文本... (按 Enter 或点击外部翻译)"
+            placeholder="请输入要翻译的文本"
             className="w-full h-full resize-none bg-transparent text-xl sm:text-2xl font-extrabold text-[#2D3436] leading-snug focus:outline-none placeholder:text-[#CBD5E1]"
             rows={2}
             disabled={isLoading}
@@ -740,7 +740,7 @@ export function TranslationCard() {
 
       {/* Result Card */}
       <div className="px-1 mb-4 flex-1">
-        <div className="bg-white/90 rounded-[2.5rem] p-4 sm:p-5 shadow-soft-out-lg border border-white h-full">
+        <div className="bg-white/90 rounded-[3rem] p-4 sm:p-5 shadow-soft-out-lg border border-white h-full">
           {renderResult()}
         </div>
       </div>
@@ -766,7 +766,7 @@ export function TranslationCard() {
             className={`relative w-20 h-20 rounded-full flex items-center justify-center text-white shadow-soft-out-sm transition-all duration-200 ${
               isListening
                 ? 'bg-gradient-to-tr from-[#E74C3C] to-[#C0392B] shadow-glow-error'
-                : 'bg-gradient-to-tr from-[#1ABC9C] to-[#2ECC71] shadow-glow-primary'
+                : 'bg-gradient-to-tr from-[#0EA5E9] to-[#38BDF8] shadow-glow-primary'
             }`}
           >
             {isListening ? (
@@ -841,7 +841,7 @@ export function TranslationCard() {
           <div className="flex flex-col items-center gap-4 px-8">
             {/* 旋转的扫描图标 */}
             <motion.div
-              className="w-20 h-20 bg-gradient-to-tr from-[#1ABC9C] to-[#2ECC71] rounded-full flex items-center justify-center shadow-glow-primary"
+              className="w-20 h-20 bg-gradient-to-tr from-[#0EA5E9] to-[#38BDF8] rounded-full flex items-center justify-center shadow-glow-primary"
               animate={{ rotate: 360 }}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
             >
@@ -864,7 +864,7 @@ export function TranslationCard() {
             {/* 进度条 */}
             <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-gradient-to-r from-[#1ABC9C] to-[#2ECC71]"
+                className="h-full bg-gradient-to-r from-[#0EA5E9] to-[#38BDF8]"
                 initial={{ width: 0 }}
                 animate={{ width: `${ocrProgress}%` }}
                 transition={{ duration: 0.3 }}

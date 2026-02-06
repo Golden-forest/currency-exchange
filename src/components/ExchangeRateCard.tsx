@@ -2,6 +2,36 @@
 
 import { useExchangeRate } from '@/hooks/useExchangeRate';
 
+/**
+ * 智能格式化汇率数字
+ * - 0.01-1: 显示4位小数
+ * - 0.001-0.01: 显示5位小数
+ * - <0.001: 使用科学计数法
+ */
+const formatRate = (rate: number): string => {
+  if (rate >= 0.01) {
+    return rate.toFixed(4);
+  } else if (rate >= 0.001) {
+    return rate.toFixed(5);
+  } else {
+    return rate.toExponential(2);
+  }
+};
+
+/**
+ * 计算反向汇率(1 CNY = ? KRW)
+ */
+const formatReverseRate = (rate: number): string => {
+  const reverseRate = 1 / rate;
+  if (reverseRate >= 1000) {
+    return `${(reverseRate / 10000).toFixed(2)}万`;
+  } else if (reverseRate >= 100) {
+    return reverseRate.toFixed(1);
+  } else {
+    return reverseRate.toFixed(0);
+  }
+};
+
 export function ExchangeRateCard() {
   const { rate, lastUpdate, isLoading, error, refetch } = useExchangeRate();
 
@@ -18,23 +48,36 @@ export function ExchangeRateCard() {
   return (
     <div
       onClick={refetch}
-      className="text-center cursor-pointer hover:opacity-80 transition-opacity"
+      className="flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
     >
       {isLoading ? (
-        <span className="text-text-secondary text-xs">加载中...</span>
+        <span className="text-text-secondary text-xs font-medium">加载中...</span>
       ) : error ? (
-        <span className="text-red-400 text-xs">{error}</span>
+        <span className="text-red-400 text-xs font-medium">{error}</span>
       ) : (
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-text-secondary text-xs">
-            1 KRW = {rate ? rate.toFixed(4) : '0'} CNY
-          </span>
+        <>
+          {/* 主汇率 */}
+          <div className="flex items-baseline justify-center gap-1">
+            <span className="text-text-secondary text-xs">1 KRW =</span>
+            <span className="text-text-primary text-sm font-bold">{formatRate(rate)}</span>
+            <span className="text-text-secondary text-xs">CNY</span>
+          </div>
+
+          {/* 反向汇率 */}
+          <div className="flex items-baseline justify-center gap-1">
+            <span className="text-text-secondary text-[10px]">1 CNY ≈</span>
+            <span className="text-text-secondary text-xs font-semibold">{formatReverseRate(rate)}</span>
+            <span className="text-text-secondary text-[10px]">KRW</span>
+          </div>
+
+          {/* 更新时间 */}
           {lastUpdate && (
-            <span className="text-text-secondary text-xs">
-              更新: {formatTime(lastUpdate)}
-            </span>
+            <div className="flex items-center justify-center gap-1">
+              <span className="text-text-secondary text-[10px]">更新:</span>
+              <span className="text-text-secondary text-[10px] font-medium">{formatTime(lastUpdate)}</span>
+            </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

@@ -64,7 +64,6 @@ body {
 .skeuo-pill {
   background: linear-gradient(145deg, #ffffff, #f0f2f6);
   box-shadow: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .skeuo-pill:active {
