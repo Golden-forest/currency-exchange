@@ -62,6 +62,9 @@ export function TranslationCard() {
     loadHistory: true,
   });
 
+  /** 语言切换旋转动画状态 */
+  const [isSwapping, setIsSwapping] = useState(false);
+
   // 本地状态，用于覆盖 hook 返回的值（主要用于历史记录选择）
   const [localTargetText, setLocalTargetText] = useState<string>('');
   const [localRomanization, setLocalRomanization] = useState<string>('');
@@ -306,6 +309,9 @@ export function TranslationCard() {
    * 处理语言交换
    */
   const handleSwapLanguages = useCallback(() => {
+    // 触发旋转动画
+    setIsSwapping(true);
+
     swapLanguages();
     // 交换输入框的值
     if (targetText) {
@@ -316,6 +322,9 @@ export function TranslationCard() {
     // 清空本地状态（因为 swapLanguages 会处理）
     setLocalTargetText('');
     setLocalRomanization('');
+
+    // 动画完成后重置状态
+    setTimeout(() => setIsSwapping(false), 300);
   }, [swapLanguages, targetText]);
 
   /**
@@ -740,6 +749,12 @@ export function TranslationCard() {
           <motion.div
             whileHover={{ scale: 1.1, rotate: 180 }}
             whileTap={{ scale: 0.9 }}
+            animate={{ rotate: isSwapping ? 360 : 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 17
+            }}
             onClick={handleSwapLanguages}
             className="w-10 h-10 bg-[#0EA5E9] rounded-full shadow-glow-primary flex items-center justify-center text-white cursor-pointer"
           >
