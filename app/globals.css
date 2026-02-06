@@ -136,3 +136,32 @@ body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* 禁用默认触摸行为，提升手势响应 */
+.touch-optimized {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 拖拽时的光标样式 */
+.cursor-grab {
+  cursor: grab;
+}
+
+.cursor-grabbing {
+  cursor: grabbing;
+}
+
+/* 移除移动端点击高亮 */
+.no-tap-highlight {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 优化触摸响应延迟 */
+@media (pointer: coarse) {
+  * {
+    touch-action: manipulation;
+  }
+}

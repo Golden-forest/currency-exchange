@@ -131,7 +131,7 @@ export default function Home() {
   };
 
   return (
-    <main className={`h-screen w-full ${getBackgroundGradient()} overflow-hidden flex flex-col items-center justify-center p-2 sm:p-4 relative touch-none transition-all duration-500`}>
+    <main className={`h-screen w-full ${getBackgroundGradient()} overflow-hidden flex flex-col items-center justify-center p-2 sm:p-4 relative touch-optimized transition-all duration-500`}>
 
       <div className="w-full max-w-lg h-[92vh] relative perspective-1000">
         <AnimatePresence initial={false} custom={direction}>
