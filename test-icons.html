@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图标功能测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .icon-btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #F0F2F6;
+            transition: all 0.2s;
+        }
+        .icon-btn:hover {
+            background: #E9EDF2;
+        }
+        .icon-btn.selected {
+            background: linear-gradient(135deg, #FF6B81, #FF9FF3);
+            box-shadow: 0 4px 12px rgba(255, 107, 129, 0.3);
+            transform: scale(1.1);
+        }
+        .add-btn {
+            width: 48px;
+            height: 48px;
+            border: 2px dashed #636E72;
+            border-radius: 12px;
+            background: #F0F2F6;
+            font-size: 24px;
+            color: #636E72;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .add-btn:hover {
+            background: #E9EDF2;
+            border-color: #8B5CF6;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .storage-display {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 图标优化与自定义功能测试</h1>
+
+    <!-- 任务 6: 图标优化 -->
+    <div class="test-section">
+        <h2>任务 6: 图标优化</h2>
+        <p><strong>保留的图标 (15 个):</strong></p>
+        <div class="icon-grid" id="presetIcons"></div>
+        <p style="color: #666; font-size: 12px;">✅ 布局改为 6 列，按钮增大到 48x48，间距 12px</p>
+    </div>
+
+    <!-- 任务 7: 自定义图标上传 -->
+    <div class="test-section">
+        <h2>任务 7: 自定义图标上传</h2>
+        <div class="icon-grid" id="customIcons"></div>
+        <button class="add-btn" onclick="handleImageUpload()">+</button>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+        <div id="uploadStatus" class="status info">点击 "+" 上传自定义图标 (最大 50KB, 128x128)</div>
+    </div>
+
+    <!-- 任务 8: 图标存储管理 -->
+    <div class="test-section">
+        <h2>任务 8: 图标存储管理</h2>
+        <button onclick="displayStorage()" style="padding: 8px 16px; background: #8B5CF6; color: white; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px;">显示 localStorage</button>
+        <button onclick="clearStorage()" style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; margin-left: 10px;">清空自定义图标</button>
+        <div id="storageDisplay" class="storage-display"></div>
+    </div>
+
+    <script>
+        // 预设图标 (精简后)
+        const EMOJI_OPTIONS = [
+            '🍜', '☕', '🍕', '🍔', '🍣', '🥐',
+            '🚕', '🎫', '🛍️',
+            '💊', '🎁', '🎮',
+            '🏪', '⛽', '📍'
+        ];
+
+        // 初始化预设图标显示
+        function initPresetIcons() {
+            const container = document.getElementById('presetIcons');
+            EMOJI_OPTIONS.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.className = 'icon-btn';
+                btn.textContent = emoji;
+                btn.onclick = () => {
+                    document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // 加载自定义图标
+        function loadCustomIcons() {
+            try {
+                const data = localStorage.getItem('customIcons');
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                console.error('加载自定义图标失败:', e);
+                return [];
+            }
+        }
+
+        // 保存自定义图标
+        function saveCustomIcons(icons) {
+            try {
+                localStorage.setItem('customIcons', JSON.stringify(icons));
+                return true;
+            } catch (e) {
+                console.error('保存自定义图标失败:', e);
+                return false;
+            }
+        }
+
+        // 显示自定义图标
+        function displayCustomIcons() {
+            const container = document.getElementById('customIcons');
+            container.innerHTML = '';
+            const icons = loadCustomIcons();
+
+            icons.forEach(icon => {
+                const btn = document.createElement('button');
+                btn.className = 'icon-btn';
+                btn.style.position = 'relative';
+                btn.innerHTML = `<img src="${icon.data}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;">`;
+
+                // 右键删除
+                btn.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    if (confirm('确定删除这个自定义图标?')) {
+                        const updated = icons.filter(i => i.id !== icon.id);
+                        if (saveCustomIcons(updated)) {
+                            displayCustomIcons();
+                            displayStorage();
+                            showStatus('图标已删除', 'success');
+                        }
+                    }
+                };
+
+                btn.onclick = () => {
+                    document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                };
+
+                container.appendChild(btn);
+            });
+        }
+
+        // 处理图片上传
+        function handleImageUpload() {
+            document.getElementById('fileInput').click();
+        }
+
+        // 处理文件选择
+        async function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showStatus('❌ 请选择图片文件', 'error');
+                return;
+            }
+
+            showStatus('⏳ 正在处理图片...', 'info');
+
+            try {
+                // 1. 读取文件
+                const bitmap = await createImageBitmap(file);
+
+                // 2. 调整尺寸 (最大 128x128)
+                const maxSize = 128;
+                let width = bitmap.width;
+                let height = bitmap.height;
+
+                if (width > height) {
+                    if (width > maxSize) {
+                        height = (height * maxSize) / width;
+                        width = maxSize;
+                    }
+                } else {
+                    if (height > maxSize) {
+                        width = (width * maxSize) / height;
+                        height = maxSize;
+                    }
+                }
+
+                // 3. 绘制到 canvas
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(bitmap, 0, 0, width, height);
+
+                // 4. 压缩为 JPEG (质量 0.7)
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                // 5. 检查大小 (最大 50KB)
+                const sizeInKB = Math.round((dataUrl.length * 3) / 4 / 1024);
+                if (sizeInKB > 50) {
+                    showStatus(`❌ 图片过大 (${sizeInKB}KB)，请选择更小的图片 (最大 50KB)`, 'error');
+                    return;
+                }
+
+                // 6. 检查数量限制
+                const existing = loadCustomIcons();
+                if (existing.length >= 5) {
+                    showStatus('❌ 最多只能添加 5 个自定义图标', 'error');
+                    return;
+                }
+
+                // 7. 保存新图标
+                const newIcon = {
+                    id: Date.now().toString(),
+                    data: dataUrl,
+                    createdAt: new Date().toISOString()
+                };
+
+                const updated = [...existing, newIcon];
+                if (saveCustomIcons(updated)) {
+                    displayCustomIcons();
+                    displayStorage();
+                    showStatus(`✅ 图片上传成功! (${sizeInKB}KB)`, 'success');
+                }
+
+            } catch (e) {
+                console.error('图片处理失败:', e);
+                showStatus('❌ 图片处理失败: ' + e.message, 'error');
+            }
+
+            // 重置 input
+            event.target.value = '';
+        }
+
+        // 显示状态消息
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('uploadStatus');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        // 显示 localStorage 内容
+        function displayStorage() {
+            const icons = loadCustomIcons();
+            const display = document.getElementById('storageDisplay');
+            display.innerHTML = `
+                <strong>自定义图标数量:</strong> ${icons.length}/5<br>
+                <strong>总大小:</strong> ${calculateTotalSize(icons)} KB<br>
+                <strong>详细数据:</strong><br>
+                ${JSON.stringify(icons, null, 2).substring(0, 500)}...
+            `;
+        }
+
+        // 计算总大小
+        function calculateTotalSize(icons) {
+            return icons.reduce((total, icon) => {
+                return total + Math.round((icon.data.length * 3) / 4 / 1024);
+            }, 0);
+        }
+
+        // 清空自定义图标
+        function clearStorage() {
+            if (confirm('确定清空所有自定义图标?')) {
+                localStorage.removeItem('customIcons');
+                displayCustomIcons();
+                displayStorage();
+                showStatus('✅ 自定义图标已清空', 'success');
+            }
+        }
+
+        // 初始化
+        initPresetIcons();
+        displayCustomIcons();
+        displayStorage();
+    </script>
+</body>
+</html>

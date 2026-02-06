@@ -5,13 +5,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Transaction, SplitType } from '@/types/trip';
 import { exchangeService } from '@/services/exchange';
 
-// 预设的图标选项
+// 预设的图标选项 (精简后保留 15 个)
 const EMOJI_OPTIONS = [
   '🍜', '☕', '🍕', '🍔', '🍣', '🥐',
-  '🚕', '🚇', '✈️', '🏨', '🎫', '🛍️',
-  '💊', '🎁', '🎮', '🎬', '📸', '🎵',
-  '💰', '🏧', '🏪', '⛽', '🚩', '📍'
+  '🚕', '🎫', '🛍️',
+  '💊', '🎁', '🎮',
+  '🏪', '⛽', '📍'
 ];
+
+// 自定义图标类型定义
+interface CustomIcon {
+  id: string;
+  data: string; // base64 data URL
+  createdAt: string;
+}
 
 type Currency = 'KRW' | 'CNY';
 type ButtonState = 'normal' | 'submitting' | 'success';
@@ -38,7 +45,11 @@ export const AddTransactionModal = React.memo(({
   const [splitType, setSplitType] = useState<SplitType>('even');
   const [splitAmong, setSplitAmong] = useState<string[]>([]);
   const [treatedBy, setTreatedBy] = useState('');
-  const [icon, setIcon] = useState('💰');
+  const [icon, setIcon] = useState('🍜'); // 使用保留的图标作为默认
+
+  // 自定义图标状态
+  const [customIcons, setCustomIcons] = useState<CustomIcon[]>([]);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // 按钮状态
   const [buttonState, setButtonState] = useState<ButtonState>('normal');
@@ -80,6 +91,20 @@ export const AddTransactionModal = React.memo(({
       setTreatedBy(travelers[0]);
     }
   }, [travelers, treatedBy]);
+
+  // 加载自定义图标
+  useEffect(() => {
+    const loadCustomIcons = (): CustomIcon[] => {
+      try {
+        const data = localStorage.getItem('customIcons');
+        return data ? JSON.parse(data) : [];
+      } catch {
+        return [];
+      }
+    };
+
+    setCustomIcons(loadCustomIcons());
+  }, []);
 
   // 处理金额变化 (支持双向转换)
   const handleAmountChange = (value: string, selectedCurrency: Currency) => {
@@ -241,6 +266,131 @@ export const AddTransactionModal = React.memo(({
     }
   };
 
+  // 处理图片上传
+  const handleImageUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  // 处理文件选择
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 验证文件类型
+    if (!file.type.startsWith('image/')) {
+      alert('请选择图片文件');
+      return;
+    }
+
+    // 处理图片
+    await processAndSaveImage(file);
+
+    // 重置 input 以允许重复选择同一文件
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // 图片压缩与存储
+  const processAndSaveImage = async (file: File): Promise<void> => {
+    try {
+      // 1. 读取文件
+      const bitmap = await createImageBitmap(file);
+
+      // 2. 调整尺寸 (最大 128x128)
+      const maxSize = 128;
+      let width = bitmap.width;
+      let height = bitmap.height;
+
+      if (width > height) {
+        if (width > maxSize) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        }
+      } else {
+        if (height > maxSize) {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+      }
+
+      // 3. 绘制到 canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(bitmap, 0, 0, width, height);
+
+      // 4. 压缩为 JPEG (质量 0.7)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+      // 5. 检查大小 (最大 50KB)
+      const sizeInKB = Math.round((dataUrl.length * 3) / 4 / 1024);
+      if (sizeInKB > 50) {
+        alert(`图片过大 (${sizeInKB}KB),请选择更小的图片 (最大 50KB)`);
+        return;
+      }
+
+      // 6. 加载现有自定义图标
+      const existing = loadCustomIcons();
+      if (existing.length >= 5) {
+        alert('最多只能添加 5 个自定义图标\n\n提示: 长按图标可以删除');
+        return;
+      }
+
+      // 7. 保存新图标
+      const newIcon: CustomIcon = {
+        id: Date.now().toString(),
+        data: dataUrl,
+        createdAt: new Date().toISOString()
+      };
+
+      const updated = [...existing, newIcon];
+      localStorage.setItem('customIcons', JSON.stringify(updated));
+
+      // 8. 更新状态
+      setCustomIcons(updated);
+      setIcon(newIcon.id); // 选中新图标
+
+    } catch (error) {
+      console.error('图片处理失败:', error);
+      alert('图片处理失败,请重试');
+    }
+  };
+
+  // 加载自定义图标 (辅助函数)
+  const loadCustomIcons = (): CustomIcon[] => {
+    try {
+      const data = localStorage.getItem('customIcons');
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  // 删除自定义图标
+  const handleDeleteIcon = (iconId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!confirm('确定要删除这个自定义图标吗?')) {
+      return;
+    }
+
+    try {
+      const updated = customIcons.filter(icon => icon.id !== iconId);
+      localStorage.setItem('customIcons', JSON.stringify(updated));
+      setCustomIcons(updated);
+
+      // 如果删除的是当前选中的图标,重置为默认
+      if (icon === iconId) {
+        setIcon('🍜');
+      }
+    } catch (error) {
+      console.error('删除图标失败:', error);
+      alert('删除图标失败,请重试');
+    }
+  };
+
   // 打勾动画组件
   const CheckAnimation = () => (
     <motion.div
@@ -303,13 +453,14 @@ export const AddTransactionModal = React.memo(({
               <label className="block text-sm font-bold text-[#2D3436] mb-3">
                 选择图标
               </label>
-              <div className="grid grid-cols-8 gap-2">
+              <div className="grid grid-cols-6 gap-3">
+                {/* 预设图标 */}
                 {EMOJI_OPTIONS.map((emoji) => (
                   <button
                     key={emoji}
                     type="button"
                     onClick={() => setIcon(emoji)}
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all ${
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all ${
                       icon === emoji
                         ? 'bg-gradient-to-br from-[#FF6B81] to-[#FF9FF3] shadow-lg scale-110'
                         : 'bg-[#F0F2F6] hover:bg-[#E9EDF2]'
@@ -318,7 +469,62 @@ export const AddTransactionModal = React.memo(({
                     {emoji}
                   </button>
                 ))}
+
+                {/* 自定义图标 */}
+                {customIcons.map((customIcon) => {
+                  const isCustomIcon = icon === customIcon.id;
+                  return (
+                    <button
+                      key={customIcon.id}
+                      type="button"
+                      onClick={() => setIcon(customIcon.id)}
+                      className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                        isCustomIcon
+                          ? 'bg-gradient-to-br from-[#FF6B81] to-[#FF9FF3] shadow-lg scale-110'
+                          : 'bg-[#F0F2F6] hover:bg-[#E9EDF2]'
+                      }`}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        handleDeleteIcon(customIcon.id, e);
+                      }}
+                    >
+                      <img
+                        src={customIcon.data}
+                        alt="自定义图标"
+                        className="w-8 h-8 object-cover rounded"
+                      />
+                      {/* 删除提示 (可选) */}
+                      <span className="absolute -top-1 -right-1 hidden group-hover:block w-4 h-4 bg-red-500 rounded-full items-center justify-center">
+                        ×
+                      </span>
+                    </button>
+                  );
+                })}
+
+                {/* 添加自定义图标按钮 */}
+                <button
+                  type="button"
+                  onClick={handleImageUpload}
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl
+                         border-2 border-dashed border-[#636E72] bg-[#F0F2F6]
+                         hover:bg-[#E9EDF2] hover:border-[#8B5CF6] transition-all"
+                  title="添加自定义图标"
+                >
+                  <span className="text-[#636E72]">+</span>
+                </button>
+
+                {/* 隐藏的文件输入 */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
               </div>
+              <p className="mt-2 text-xs text-[#636E72]">
+                提示: 右键点击自定义图标可以删除
+              </p>
             </div>
 
             {/* 商家名称 */}
