@@ -729,11 +729,26 @@ export function TranslationCard() {
             <motion.div
               key={phrase.id}
               whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{
+                scale: 0.95,
+                rotate: -5,
+                transition: { type: 'spring', stiffness: 400, damping: 17 }
+              }}
               onClick={() => handleQuickPhrase(phrase)}
               className="bg-white/90 rounded-[2.5rem] p-3 flex items-center flex-shrink-0 min-w-[140px] border border-white cursor-pointer"
             >
-              <div className="text-[#0EA5E9] text-[10px] mr-2.5">▶</div>
+              <motion.div
+                animate={{
+                  scale: [1, 1.2, 1],
+                }}
+                transition={{
+                  duration: 0.3,
+                  repeat: 0,
+                }}
+                className="text-[#0EA5E9] text-[10px] mr-2.5"
+              >
+                ▶
+              </motion.div>
               <div>
                 <div className="font-bold text-[#2D3436] text-xs sm:text-sm">{phrase.zh}</div>
                 <div className="text-[9px] sm:text-[10px] text-[#A4B0BE] font-medium">{phrase.romanization}</div>
