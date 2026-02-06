@@ -1,4 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 货币兑换应用
+
+一个功能强大的货币兑换和旅行辅助应用,支持中韩货币兑换、旅行记账和智能翻译功能。
+
+## 主要功能
+
+- **货币兑换**: 实时中韩货币兑换,支持快捷金额选择
+- **旅行记账**: 便捷的旅行支出记录和统计
+- **智能翻译**: 集成 DeepSeek API 的多语言翻译功能
+
+## 移动端体验优化
+
+本项目针对移动端进行了以下优化:
+
+- ✅ 左右滑动切换卡片，符合移动端交互习惯
+- ✅ 按钮点击动画增强，提供清晰的视觉反馈
+- ✅ 手势动画优化，包括弹性回弹、边界反馈等
+- ✅ 全局触摸样式优化，降低响应延迟
+
+详细实施计划见：[移动端优化实施计划](./docs/plans/2026-02-06-mobile-experience-optimization.md)
+
+测试清单见：[移动端优化测试清单](./docs/mobile-optimization-testing.md)
+
+---
 
 ## Getting Started
 
