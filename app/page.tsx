@@ -16,6 +16,10 @@ export default function Home() {
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [direction, setDirection] = useState(0);
 
+  // 边界状态检测
+  const isAtFirstCard = activeCardIndex === 0;
+  const isAtLastCard = activeCardIndex === CARDS.length - 1;
+
   // 手势冲突检测
   const detectGesture = (offset: {x: number, y: number}): 'horizontal' | 'vertical' => {
     const angle = Math.abs(Math.atan2(offset.y, offset.x) * 180 / Math.PI);
@@ -149,8 +153,12 @@ export default function Home() {
               scale: { duration: 0.35, ease: "easeInOut" }
             }}
             drag="x"                                    // 改为横向
-            dragConstraints={{ left: 0, right: 0 }}     // 水平约束
-            dragElastic={0.35}                          // 增加弹性
+            dragConstraints={
+              isAtFirstCard || isAtLastCard
+                ? { left: -50, right: 50 }      // 边界时允许少量拖拽
+                : { left: 0, right: 0 }          // 正常约束在原点
+            }
+            dragElastic={isAtFirstCard || isAtLastCard ? 0.1 : 0.35}
             dragTransition={{
               bounceDamping: 20,
               bounceStiffness: 300,
