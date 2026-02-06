@@ -85,6 +85,20 @@ const SYSTEM_PROMPT = `你是专业的中韩翻译助手。
 - 对于韩语→中文：使用地道的中文表达`;
 
 /**
+ * 系统提示词（自动语言检测）
+ *
+ * @description 定义 AI 翻译助手自动检测语言的规则
+ */
+const AUTO_DETECT_SYSTEM_PROMPT = `你是专业的中韩翻译助手。
+规则：
+- 自动检测输入文本的语言（中文或韩语）
+- 翻译成另一种语言
+- 只返回翻译结果，不要解释
+- 保持原文的语气和礼貌程度
+- 对于中文→韩语：使用自然的韩语表达
+- 对于韩语→中文：使用地道的中文表达`;
+
+/**
  * 智能重试配置
  *
  * @description 针对不同错误状态码的重试策略
@@ -604,4 +618,109 @@ export const getCacheStats = (): { size: number; keys: string[] } => {
     size: translationCache.size,
     keys: Array.from(translationCache.keys()),
   };
+};
+
+/**
+ * 翻译文本（自动检测源语言）
+ *
+ * @description 自动检测输入文本的语言并翻译成另一种语言：
+ * 1. 输入验证
+ * 2. 调用 DeepSeek API 自动检测语言
+ * 3. 缓存保存
+ * 4. 罗马音生成（如果结果是韩语）
+ *
+ * @param text - 要翻译的文本
+ * @returns 翻译结果，包含翻译文本、罗马音、检测到的源语言和离线标识
+ * @throws Error 当输入无效或 API 调用失败时抛出错误
+ *
+ * @example
+ * ```typescript
+ * // 自动检测并翻译
+ * const result = await translateTextAutoDetect('你好');
+ * console.log(result.translatedText); // '안녕하세요'
+ * console.log(result.detectedSourceLang); // 'zh'
+ *
+ * const result2 = await translateTextAutoDetect('안녕하세요');
+ * console.log(result2.translatedText); // '你好'
+ * console.log(result2.detectedSourceLang); // 'ko'
+ * ```
+ */
+export const translateTextAutoDetect = async (
+  text: string
+): Promise<TranslationResult & { detectedSourceLang: Language }> => {
+  // 输入验证
+  if (!text || text.trim().length === 0) {
+    throw new Error('翻译文本不能为空');
+  }
+
+  if (text.length > 5000) {
+    throw new Error('翻译文本长度不能超过 5000 字符');
+  }
+
+  const apiKey = getApiKey();
+
+  if (!apiKey) {
+    throw new Error(
+      'DeepSeek API 密钥未配置。请在 .env.local 中设置 NEXT_PUBLIC_DEEPSEEK_API_KEY'
+    );
+  }
+
+  // 构建用户提示词（不指定语言，让 AI 自动检测）
+  const userPrompt = `翻译:${text}`;
+
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: AUTO_DETECT_SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 1000,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData: DeepSeekError = await response.json();
+      await handleAPIError(errorData, response.status, text, 'zh', 'ko');
+    }
+
+    const data: DeepSeekResponse = await response.json();
+    const translatedText = data.choices[0]?.message?.content;
+
+    if (!translatedText) {
+      throw new Error('翻译结果为空');
+    }
+
+    // 检测源语言：通过简单的启发式方法
+    // 如果输入包含韩文字符，则认为是韩语；否则认为是中文
+    const hasKorean = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/.test(text);
+    const detectedSourceLang: Language = hasKorean ? 'ko' : 'zh';
+    const targetLang: Language = hasKorean ? 'zh' : 'ko';
+
+    // 保存到缓存
+    saveToCache(text, detectedSourceLang, targetLang, translatedText);
+
+    // 返回结果
+    return {
+      translatedText,
+      romanization:
+        targetLang === 'ko'
+          ? koreanToRomanization(translatedText)
+          : undefined,
+      isOffline: false,
+      detectedSourceLang,
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('翻译请求失败，请检查网络连接');
+  }
 };

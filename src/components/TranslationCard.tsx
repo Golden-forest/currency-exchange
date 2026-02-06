@@ -81,12 +81,35 @@ export function TranslationCard() {
     resetTranscript,
     isSupported,
   } = useSpeechRecognition({
-    onTranscriptComplete: (transcript) => {
-      // 语音识别完成后，自动翻译
-      // 只调用 setInputValue，它会通过 handleInputChange 更新 sourceText
+    onTranscriptComplete: async (transcript) => {
+      // 语音识别完成后，使用自动检测翻译
       setInputValue(transcript);
-      // 直接翻译
-      translate(transcript);
+
+      // 导入自动检测翻译函数
+      const { translateTextAutoDetect } = await import('@/utils/deepseekTranslate');
+
+      try {
+        // 使用自动检测翻译
+        const result = await translateTextAutoDetect(transcript);
+
+        // 更新界面显示
+        setSourceText(transcript);
+        setLocalTargetText(result.translatedText);
+        setLocalRomanization(result.romanization || '');
+
+        // 根据检测结果更新语言设置
+        if (result.detectedSourceLang === 'zh') {
+          setSourceLang('zh');
+          setTargetLang('ko');
+        } else {
+          setSourceLang('ko');
+          setTargetLang('zh');
+        }
+      } catch (error) {
+        console.error('自动检测翻译失败:', error);
+        // 降级到普通翻译
+        translate(transcript);
+      }
     },
   });
 
@@ -340,10 +363,10 @@ export function TranslationCard() {
       // 停止录音
       stopListening();
     } else {
-      // 直接使用 sourceLang，speechService 内部会处理语言代码转换
-      startListening(sourceLang);
+      // 固定使用中文模式识别语音，让 DeepSeek 自动检测语言
+      startListening('zh');
     }
-  }, [isListening, sourceLang, isSupported, speechError, startListening, stopListening, showToast]);
+  }, [isListening, isSupported, speechError, startListening, stopListening, showToast]);
 
   /**
    * Scan 按钮点击处理

@@ -79,8 +79,8 @@ export const SettlementModal = React.memo(({ report, onClose, onClear }: Props) 
             {/* 表格内容 */}
             {report.map((item) => {
               const settled = isSettled(item.balance);
-              const shouldPay = item.balance > 0;
-              const shouldReceive = item.balance < 0;
+              const shouldPay = item.balance > 0;      // 正数:应该付钱(应付 > 已付)
+              const shouldReceive = item.balance < 0;  // 负数:应该收钱(已付 > 应付)
 
               return (
                 <motion.div
@@ -91,9 +91,9 @@ export const SettlementModal = React.memo(({ report, onClose, onClear }: Props) 
                   className={`grid grid-cols-4 gap-4 px-6 py-4 rounded-2xl transition-all ${
                     settled
                       ? 'bg-[#F0F2F6]'
-                      : shouldPay
-                      ? 'bg-red-50'
-                      : 'bg-green-50'
+                      : shouldReceive
+                      ? 'bg-purple-50'
+                      : 'bg-red-50'
                   }`}
                 >
                   {/* 旅行者 */}
@@ -129,19 +129,19 @@ export const SettlementModal = React.memo(({ report, onClose, onClear }: Props) 
                       <div className="text-sm font-bold text-[#636E72]">
                         已结清
                       </div>
-                    ) : shouldPay ? (
-                      <div className="flex items-center justify-end gap-1">
-                        <span className="text-red-500 text-xl">↑</span>
-                        <span className="text-sm font-bold text-red-500">
-                          {formatAmount(item.balance)}
-                        </span>
+                    ) : shouldReceive ? (
+                      <div>
+                        <div className="text-xs text-purple-500 mb-1">应收</div>
+                        <div className="text-sm font-bold text-purple-500">
+                          {formatAmount(Math.abs(item.balance))}
+                        </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-end gap-1">
-                        <span className="text-green-500 text-xl">↓</span>
-                        <span className="text-sm font-bold text-green-500">
-                          {formatAmount(Math.abs(item.balance))}
-                        </span>
+                      <div>
+                        <div className="text-xs text-red-500 mb-1">应付</div>
+                        <div className="text-sm font-bold text-red-500">
+                          {formatAmount(item.balance)}
+                        </div>
                       </div>
                     )}
                   </div>
