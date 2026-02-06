@@ -50,8 +50,9 @@ export const AddTransactionModal = React.memo(({
 
   // 初始化汇率服务
   useEffect(() => {
+    // 如果服务未初始化且提供了汇率,使用公共 API 设置汇率
     if (currentRate && !exchangeService.getCurrentRate()) {
-      exchangeService['currentRate'] = currentRate;
+      exchangeService.setRate(currentRate);
     }
   }, [currentRate]);
 
@@ -80,7 +81,22 @@ export const AddTransactionModal = React.memo(({
   const handleAmountChange = (value: string, selectedCurrency: Currency) => {
     const amount = parseFloat(value);
 
-    if (!isNaN(amount) && amount > 0 && currentRate) {
+    // 拒绝负数
+    if (!isNaN(amount) && amount < 0) {
+      setErrors(prev => ({ ...prev, amount: '金额不能为负数' }));
+      // 清空对应的输入
+      if (selectedCurrency === 'KRW') {
+        setAmountKRW('');
+        setAmountCNY('');
+      } else {
+        setAmountCNY('');
+        setAmountKRW('');
+      }
+      return;
+    }
+
+    // 处理 0 或有效正数
+    if (!isNaN(amount) && amount >= 0 && currentRate) {
       try {
         if (selectedCurrency === 'KRW') {
           // 输入的是韩元,计算人民币

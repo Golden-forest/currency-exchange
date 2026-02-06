@@ -98,7 +98,10 @@ export class ExchangeRateService {
     if (!this.currentRate) {
       throw new Error('汇率未加载');
     }
-    return krw * this.currentRate;
+    // 使用更精确的舍入策略,避免精度丢失
+    // 先计算,然后使用 toFixed(2) 并转回数字,确保保留两位小数
+    const result = krw * this.currentRate;
+    return Math.round(result * 100) / 100;
   }
 
   /**
@@ -108,7 +111,10 @@ export class ExchangeRateService {
     if (!this.currentRate) {
       throw new Error('汇率未加载');
     }
-    return cny / this.currentRate;
+    // 使用更精确的舍入策略,避免精度丢失
+    // 韩币通常不舍小数,四舍五入到整数
+    const result = cny / this.currentRate;
+    return Math.round(result);
   }
 
   /**
@@ -130,6 +136,14 @@ export class ExchangeRateService {
    */
   getLastUpdate(): Date | null {
     return this.lastUpdate;
+  }
+
+  /**
+   * 设置汇率 (用于初始化或手动更新)
+   */
+  setRate(rate: number): void {
+    this.currentRate = rate;
+    this.lastUpdate = new Date();
   }
 }
 
