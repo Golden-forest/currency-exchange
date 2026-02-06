@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ALL_PHRASES } from '@/data/phraseLibrary';
+import { fuzzyMatch, initPhraseIndex } from '@/utils/textMatcher';
+import type { Phrase } from '@/types/translation';
 
 /**
  * 翻译 API 路由
  *
  * @description 提供服务端翻译接口,保护 DeepSeek API Key 不暴露给客户端
- * 客户端调用此 API,此 API 在服务端调用 DeepSeek API
+ * 优化策略:
+ * 1. 优先使用离线短语库(快速响应 < 50ms)
+ * 2. 降级到 DeepSeek API(处理复杂句子)
  */
 
 interface TranslateRequest {
@@ -13,6 +18,25 @@ interface TranslateRequest {
   targetLang?: string;
   autoDetect?: boolean;
 }
+
+// 初始化短语库索引
+let isPhraseIndexInitialized = false;
+const initializePhraseIndex = () => {
+  if (!isPhraseIndexInitialized) {
+    initPhraseIndex(ALL_PHRASES);
+    isPhraseIndexInitialized = true;
+  }
+};
+
+/**
+ * 搜索离线短语库
+ */
+const searchOfflinePhrases = (text: string, sourceLang: 'zh' | 'ko'): Phrase | null => {
+  initializePhraseIndex();
+  const OFFLINE_MATCH_THRESHOLD = 0.8;
+  const matchResult = fuzzyMatch(text, sourceLang, OFFLINE_MATCH_THRESHOLD);
+  return matchResult && matchResult.similarity >= OFFLINE_MATCH_THRESHOLD ? matchResult.phrase : null;
+};
 
 interface DeepSeekMessage {
   role: 'system' | 'user';
@@ -165,10 +189,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const trimmedText = text.trim();
+
     if (autoDetect) {
-      // 自动检测翻译
-      const result = await translateAutoDetect(text);
-      return NextResponse.json(result);
+      // 自动检测翻译 - 先尝试离线短语
+      const detectedLang = /^[\u3131-\u3163\uac00-\ud7a3]/.test(trimmedText) ? 'ko' : 'zh';
+
+      // 优先尝试离线短语库
+      const matchedPhrase = searchOfflinePhrases(trimmedText, detectedLang);
+      if (matchedPhrase) {
+        const targetText = detectedLang === 'zh' ? matchedPhrase.ko : matchedPhrase.zh;
+        return NextResponse.json({
+          translatedText: targetText,
+          detectedSourceLang: detectedLang,
+          romanization: detectedLang === 'zh' ? matchedPhrase.romanization : undefined,
+          isOffline: true,
+        });
+      }
+
+      // 离线短语未匹配,调用 DeepSeek API
+      const result = await translateAutoDetect(trimmedText);
+      return NextResponse.json({
+        ...result,
+        isOffline: false,
+      });
     } else {
       // 普通翻译
       if (!sourceLang || !targetLang) {
@@ -178,8 +222,23 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const translatedText = await translate(text, sourceLang, targetLang);
-      return NextResponse.json({ translatedText });
+      // 优先尝试离线短语库
+      const matchedPhrase = searchOfflinePhrases(trimmedText, sourceLang as 'zh' | 'ko');
+      if (matchedPhrase) {
+        const targetText = targetLang === 'zh' ? matchedPhrase.zh : matchedPhrase.ko;
+        return NextResponse.json({
+          translatedText: targetText,
+          romanization: targetLang === 'ko' ? matchedPhrase.romanization : undefined,
+          isOffline: true,
+        });
+      }
+
+      // 离线短语未匹配,调用 DeepSeek API
+      const translatedText = await translate(trimmedText, sourceLang, targetLang);
+      return NextResponse.json({
+        translatedText,
+        isOffline: false,
+      });
     }
   } catch (error) {
     console.error('翻译 API 错误:', error);
