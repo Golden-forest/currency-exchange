@@ -143,7 +143,7 @@ export default function Home() {
   };
 
   return (
-    <main className={`h-screen w-full ${getBackgroundGradient()} overflow-hidden flex flex-col items-center justify-center p-2 sm:p-4 relative touch-optimized transition-all duration-500`}>
+    <main className={`h-screen w-full ${getBackgroundGradient()} overflow-hidden flex flex-col items-center justify-center p-2 sm:p-4 relative touch-optimized`}>
 
       <div className="w-full max-w-lg h-[92vh] relative perspective-1000">
         <AnimatePresence initial={false} custom={direction}>
@@ -162,18 +162,15 @@ export default function Home() {
               },
               opacity: { duration: 0.15, ease: "easeOut" }
             }}
-            drag="x"                                    // 改为横向
+            drag="x"
             dragConstraints={
               isAtFirstCard || isAtLastCard
-                ? { left: -50, right: 50 }      // 边界时允许少量拖拽
-                : { left: 0, right: 0 }          // 正常约束在原点
+                ? { left: -50, right: 50 }
+                : { left: 0, right: 0 }
             }
-            dragElastic={isAtFirstCard || isAtLastCard ? 0.1 : 0.35}
+            dragElastic={0.05}
             dragTransition={{
-              bounceDamping: 20,
-              bounceStiffness: 300,
-              power: 0.3,
-              timeConstant: 200
+              timeConstant: 50
             }}
             onDragEnd={(e, { offset, velocity }) => {
               const swipeConfidenceThreshold = 60;      // 降低阈值

@@ -28,6 +28,7 @@ export function TripLedgerCard({
     const [showSettings, setShowSettings] = useState(false);
     const [showAddTransaction, setShowAddTransaction] = useState(false);
     const [showSettlement, setShowSettlement] = useState(false);
+    const [expandedTransactionId, setExpandedTransactionId] = useState<string | null>(null);
 
     // 处理自动打开 modal
     useEffect(() => {
@@ -130,6 +131,21 @@ export function TripLedgerCard({
     const handleClearData = () => {
         setTransactions([]);
         setSettings(null);
+    };
+
+    // 删除交易记录
+    const handleDeleteTransaction = (id: string) => {
+        setTransactions(transactions.filter(t => t.id !== id));
+        setExpandedTransactionId(null);
+    };
+
+    // 切换交易卡片展开状态
+    const handleToggleTransaction = (id: string) => {
+        if (expandedTransactionId === id) {
+            setExpandedTransactionId(null);
+        } else {
+            setExpandedTransactionId(id);
+        }
     };
 
     return (
@@ -257,39 +273,79 @@ export function TripLedgerCard({
                                 {/* 交易列表 */}
                                 <div className="space-y-3">
                                     {group.transactions.map((t) => (
-                                        <div key={t.id} className="bg-white rounded-[2.5rem] p-5 flex items-center border border-white">
-                                            <div className="w-12 h-12 bg-[#F1F2F6] rounded-full flex items-center justify-center text-2xl mr-4">
-                                                {t.icon}
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="flex justify-between items-start">
-                                                    <h3 className="font-bold text-[#2D3436] text-sm">{t.name}</h3>
-                                                    <div className="text-right">
-                                                        <div className="font-bold text-[#2D3436] text-sm">
-                                                            {formatKRW(t.amountKRW)}
-                                                        </div>
-                                                        <div className="text-[10px] text-[#A4B0BE]">
-                                                            {formatCNY(t.amountCNY)}
+                                        <motion.div
+                                            key={t.id}
+                                            className="relative overflow-hidden"
+                                            initial={false}
+                                            animate={{
+                                                x: expandedTransactionId === t.id ? -80 : 0,
+                                            }}
+                                            transition={{
+                                                type: "spring",
+                                                stiffness: 300,
+                                                damping: 30
+                                            }}
+                                        >
+                                            {/* 删除按钮 */}
+                                            {expandedTransactionId === t.id && (
+                                                <motion.button
+                                                    initial={{ opacity: 0, scale: 0.8 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    exit={{ opacity: 0, scale: 0.8 }}
+                                                    transition={{ duration: 0.2 }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteTransaction(t.id);
+                                                    }}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-14 h-14 bg-[#FF6B81] rounded-full flex items-center justify-center shadow-lg hover:bg-[#FF5267] active:scale-95 transition-all z-10"
+                                                >
+                                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </motion.button>
+                                            )}
+
+                                            {/* 交易卡片 */}
+                                            <motion.div
+                                                className="bg-white rounded-[2.5rem] p-5 flex items-center border border-white cursor-pointer"
+                                                onClick={() => handleToggleTransaction(t.id)}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                transition={{ duration: 0.2 }}
+                                            >
+                                                <div className="w-12 h-12 bg-[#F1F2F6] rounded-full flex items-center justify-center text-2xl mr-4">
+                                                    {t.icon}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-start">
+                                                        <h3 className="font-bold text-[#2D3436] text-sm">{t.name}</h3>
+                                                        <div className="text-right">
+                                                            <div className="font-bold text-[#2D3436] text-sm">
+                                                                {formatKRW(t.amountKRW)}
+                                                            </div>
+                                                            <div className="text-[10px] text-[#A4B0BE]">
+                                                                {formatCNY(t.amountCNY)}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                                <div className="flex items-center mt-1">
-                                                    {t.splitType === 'even' && t.splitAmong && (
-                                                        <span className="text-[9px] bg-[#E3F2FD] text-[#2196F3] px-2 py-0.5 rounded-full font-bold mr-2">
-                                                            Split by {t.splitAmong.length}
+                                                    <div className="flex items-center mt-1">
+                                                        {t.splitType === 'even' && t.splitAmong && (
+                                                            <span className="text-[9px] bg-[#E3F2FD] text-[#2196F3] px-2 py-0.5 rounded-full font-bold mr-2">
+                                                                Split by {t.splitAmong.length}
+                                                            </span>
+                                                        )}
+                                                        {t.splitType === 'treat' && t.treatedBy && (
+                                                            <span className="text-[9px] bg-[#FFF3E0] text-[#FF9800] px-2 py-0.5 rounded-full font-bold mr-2">
+                                                                {t.treatedBy}'s Treat
+                                                            </span>
+                                                        )}
+                                                        <span className="text-[9px] text-[#CED6E0] font-medium ml-auto">
+                                                            {formatTime(t.timestamp)}
                                                         </span>
-                                                    )}
-                                                    {t.splitType === 'treat' && t.treatedBy && (
-                                                        <span className="text-[9px] bg-[#FFF3E0] text-[#FF9800] px-2 py-0.5 rounded-full font-bold mr-2">
-                                                            {t.treatedBy}'s Treat
-                                                        </span>
-                                                    )}
-                                                    <span className="text-[9px] text-[#CED6E0] font-medium ml-auto">
-                                                        {formatTime(t.timestamp)}
-                                                    </span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </div>
+                                            </motion.div>
+                                        </motion.div>
                                     ))}
                                 </div>
                             </div>
