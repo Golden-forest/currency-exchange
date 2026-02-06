@@ -65,6 +65,17 @@ export function TranslationCard() {
   /** 语言切换旋转动画状态 */
   const [isSwapping, setIsSwapping] = useState(false);
 
+  // 清理语言切换动画的定时器
+  useEffect(() => {
+    if (!isSwapping) return;
+
+    const timer = setTimeout(() => {
+      setIsSwapping(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [isSwapping]);
+
   // 本地状态，用于覆盖 hook 返回的值（主要用于历史记录选择）
   const [localTargetText, setLocalTargetText] = useState<string>('');
   const [localRomanization, setLocalRomanization] = useState<string>('');
@@ -322,9 +333,6 @@ export function TranslationCard() {
     // 清空本地状态（因为 swapLanguages 会处理）
     setLocalTargetText('');
     setLocalRomanization('');
-
-    // 动画完成后重置状态
-    setTimeout(() => setIsSwapping(false), 300);
   }, [swapLanguages, targetText]);
 
   /**
