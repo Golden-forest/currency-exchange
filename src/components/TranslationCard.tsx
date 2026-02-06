@@ -7,7 +7,6 @@ import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { speak, isSpeechSynthesisSupported, preloadVoices } from '@/services/ttsService';
 import { extractText, getOCRErrorMessage } from '@/services/ocrService';
 import { LANGUAGE_NAMES } from '@/types/translation';
-import { debounce } from '@/utils/debounce';
 import { ALL_PHRASES } from '@/data/phraseLibrary';
 import type { Phrase, TranslationHistory } from '@/types/translation';
 import { VoiceInputIndicator } from '@/components/TranslationCard/VoiceInputIndicator';
@@ -228,6 +227,15 @@ export function TranslationCard() {
   }, [targetText, targetLang, isPlaying, showToast]);
 
   /**
+   * 执行翻译
+   */
+  const performTranslate = useCallback((text: string) => {
+    if (text.trim()) {
+      translate(text);
+    }
+  }, [translate]);
+
+  /**
    * 处理文本输入
    */
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -239,23 +247,25 @@ export function TranslationCard() {
     // 清空本地状态（因为新的翻译会覆盖它们）
     setLocalTargetText('');
     setLocalRomanization('');
-
-    // 实时翻译（debounce 500ms）
-    if (value.trim()) {
-      debouncedTranslate(value);
-    } else {
-      // 清空输入时，也清空结果
-      setInputValue('');
-      setSourceText('');
-    }
   }, [clearError, setSourceText]);
 
   /**
-   * Debounce 翻译函数
+   * 处理键盘事件（Enter 键触发翻译）
    */
-  const debouncedTranslate = debounce((text: string) => {
-    translate(text);
-  }, 500);
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // 检测 Enter 键（但不包括 Shift+Enter，允许换行）
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault(); // 阻止默认换行行为
+      performTranslate(inputValue);
+    }
+  }, [inputValue, performTranslate]);
+
+  /**
+   * 处理失去焦点事件（触发翻译）
+   */
+  const handleBlur = useCallback(() => {
+    performTranslate(inputValue);
+  }, [inputValue, performTranslate]);
 
   /**
    * 处理语言交换
@@ -661,7 +671,7 @@ export function TranslationCard() {
             View All
           </span>
         </div>
-        <div className="flex gap-3 px-1 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-3 px-1 overflow-x-auto pb-2 scrollbar-hide pt-2">
           {/* 动态渲染快捷短语 */}
           {quickPhrases.map((phrase) => (
             <motion.div
@@ -718,7 +728,9 @@ export function TranslationCard() {
           <textarea
             value={inputValue}
             onChange={handleInputChange}
-            placeholder="请输入要翻译的文本..."
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            placeholder="请输入要翻译的文本... (按 Enter 或点击外部翻译)"
             className="w-full h-full resize-none bg-transparent text-xl sm:text-2xl font-extrabold text-[#2D3436] leading-snug focus:outline-none placeholder:text-[#CBD5E1]"
             rows={2}
             disabled={isLoading}
