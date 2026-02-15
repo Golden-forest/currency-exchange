@@ -29,6 +29,7 @@ export function TripLedgerCard({
     const [showAddTransaction, setShowAddTransaction] = useState(false);
     const [showSettlement, setShowSettlement] = useState(false);
     const [expandedTransactionId, setExpandedTransactionId] = useState<string | null>(null);
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
     // 处理自动打开 modal
     useEffect(() => {
@@ -125,6 +126,15 @@ export function TripLedgerCard({
             date: new Date().toISOString().split('T')[0],
         };
         setTransactions([...transactions, newTransaction]);
+    };
+
+    // 修改交易
+    const handleUpdateTransaction = (id: string, updates: Partial<Transaction>) => {
+        setTransactions(transactions.map(t => 
+            t.id === id ? { ...t, ...updates } as Transaction : t
+        ));
+        setEditingTransaction(null);
+        setExpandedTransactionId(null);
     };
 
     // 清空所有数据
@@ -278,7 +288,7 @@ export function TripLedgerCard({
                                             className="relative overflow-hidden"
                                             initial={false}
                                             animate={{
-                                                x: expandedTransactionId === t.id ? -80 : 0,
+                                                x: expandedTransactionId === t.id ? -150 : 0,
                                             }}
                                             transition={{
                                                 type: "spring",
@@ -286,40 +296,73 @@ export function TripLedgerCard({
                                                 damping: 30
                                             }}
                                         >
-                                            {/* 删除按钮 */}
+                                            {/* 操作按钮区 */}
                                             {expandedTransactionId === t.id && (
-                                                <motion.button
-                                                    initial={{ opacity: 0, scale: 0.8 }}
-                                                    animate={{ opacity: 1, scale: 1 }}
-                                                    exit={{ opacity: 0, scale: 0.8 }}
-                                                    transition={{ duration: 0.2 }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeleteTransaction(t.id);
-                                                    }}
-                                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-14 h-14 bg-[#FF6B81] rounded-full flex items-center justify-center shadow-lg hover:bg-[#FF5267] active:scale-95 transition-all z-10"
-                                                >
-                                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                </motion.button>
+                                                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2 z-10">
+                                                    {/* 编辑按钮 */}
+                                                    <motion.button
+                                                        initial={{ opacity: 0, scale: 0.8 }}
+                                                        animate={{ opacity: 1, scale: 1 }}
+                                                        exit={{ opacity: 0, scale: 0.8 }}
+                                                        transition={{ duration: 0.2 }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setEditingTransaction(t);
+                                                            setShowAddTransaction(true);
+                                                        }}
+                                                        className="w-14 h-14 bg-[#4ECDC4] rounded-full flex items-center justify-center shadow-lg hover:bg-[#45BDB3] active:scale-95 transition-all"
+                                                    >
+                                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                    </motion.button>
+                                                    {/* 删除按钮 */}
+                                                    <motion.button
+                                                        initial={{ opacity: 0, scale: 0.8 }}
+                                                        animate={{ opacity: 1, scale: 1 }}
+                                                        exit={{ opacity: 0, scale: 0.8 }}
+                                                        transition={{ duration: 0.2 }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteTransaction(t.id);
+                                                        }}
+                                                        className="w-14 h-14 bg-[#FF6B81] rounded-full flex items-center justify-center shadow-lg hover:bg-[#FF5267] active:scale-95 transition-all"
+                                                    >
+                                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </motion.button>
+                                                </div>
                                             )}
 
                                             {/* 交易卡片 */}
                                             <motion.div
                                                 className="bg-white rounded-[2.5rem] p-5 flex items-center border border-white cursor-pointer"
                                                 onClick={() => handleToggleTransaction(t.id)}
-                                                whileHover={{ scale: 1.02 }}
                                                 whileTap={{ scale: 0.98 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                <div className="w-12 h-12 bg-[#F1F2F6] rounded-full flex items-center justify-center text-2xl mr-4">
-                                                    {t.icon}
+                                                <div className="flex items-center gap-2 mr-4">
+                                                    <div className="w-12 h-12 bg-[#F1F2F6] rounded-full flex items-center justify-center text-2xl flex-shrink-0">
+                                                        {t.icon}
+                                                    </div>
+                                                    {/* 支付人头像 */}
+                                                    <div 
+                                                        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm flex-shrink-0"
+                                                        style={{ 
+                                                            backgroundColor: settings?.travelers 
+                                                                ? ['#FF6B81', '#4ECDC4', '#FFE66D', '#95E1D3'][Math.max(0, settings.travelers.indexOf(t.payer)) % 4] 
+                                                                : '#FF6B81' 
+                                                        }}
+                                                        title={`支付人: ${t.payer}`}
+                                                    >
+                                                        {t.payer.slice(-1)}
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1">
+                                                <div className="flex-1 min-w-0">
                                                     <div className="flex justify-between items-start">
-                                                        <h3 className="font-bold text-[#2D3436] text-sm">{t.name}</h3>
-                                                        <div className="text-right">
+                                                        <h3 className="font-bold text-[#2D3436] text-sm truncate pr-2">{t.name}</h3>
+                                                        <div className="text-right flex-shrink-0">
                                                             <div className="font-bold text-[#2D3436] text-sm">
                                                                 {formatKRW(t.amountKRW)}
                                                             </div>
@@ -367,8 +410,13 @@ export function TripLedgerCard({
                 <AddTransactionModal
                     travelers={settings.travelers}
                     currentRate={initialRate || settings.currentRate}
+                    editingTransaction={editingTransaction}
                     onAdd={handleAddTransaction}
-                    onClose={() => setShowAddTransaction(false)}
+                    onUpdate={handleUpdateTransaction}
+                    onClose={() => {
+                        setShowAddTransaction(false);
+                        setEditingTransaction(null);
+                    }}
                 />
             )}
 

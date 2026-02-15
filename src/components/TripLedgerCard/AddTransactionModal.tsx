@@ -27,25 +27,44 @@ type Props = {
   travelers: string[];
   currentRate: number;
   onAdd: (transaction: Omit<Transaction, 'id' | 'timestamp' | 'date'>) => void;
+  onUpdate?: (id: string, updates: Partial<Transaction>) => void;
   onClose: () => void;
+  editingTransaction?: Transaction | null;
 };
 
 export const AddTransactionModal = React.memo(({
   travelers,
   currentRate,
   onAdd,
-  onClose
+  onUpdate,
+  onClose,
+  editingTransaction
 }: Props) => {
   // 表单状态
-  const [merchantName, setMerchantName] = useState('');
+  const [merchantName, setMerchantName] = useState(editingTransaction?.name || '');
   const [currency, setCurrency] = useState<Currency>('KRW');
-  const [amountKRW, setAmountKRW] = useState('');
-  const [amountCNY, setAmountCNY] = useState('');
-  const [payer, setPayer] = useState('');
-  const [splitType, setSplitType] = useState<SplitType>('even');
-  const [splitAmong, setSplitAmong] = useState<string[]>([]);
-  const [treatedBy, setTreatedBy] = useState('');
-  const [icon, setIcon] = useState('🍜'); // 使用保留的图标作为默认
+  const [amountKRW, setAmountKRW] = useState(editingTransaction?.amountKRW.toString() || '');
+  const [amountCNY, setAmountCNY] = useState(editingTransaction?.amountCNY.toString() || '');
+  const [payer, setPayer] = useState(editingTransaction?.payer || '');
+  const [splitType, setSplitType] = useState<SplitType>(editingTransaction?.splitType || 'even');
+  const [splitAmong, setSplitAmong] = useState<string[]>(editingTransaction?.splitAmong || []);
+  const [treatedBy, setTreatedBy] = useState(editingTransaction?.treatedBy || '');
+  const [icon, setIcon] = useState(editingTransaction?.icon || '🍜'); 
+
+  // 根据 editingTransaction 修正货币选择显示
+  useEffect(() => {
+    if (editingTransaction) {
+      // 默认显示 KRW,如果有值则填充
+      setMerchantName(editingTransaction.name);
+      setAmountKRW(editingTransaction.amountKRW.toString());
+      setAmountCNY(editingTransaction.amountCNY.toString());
+      setPayer(editingTransaction.payer);
+      setSplitType(editingTransaction.splitType);
+      setSplitAmong(editingTransaction.splitAmong || []);
+      setTreatedBy(editingTransaction.treatedBy || '');
+      setIcon(editingTransaction.icon);
+    }
+  }, [editingTransaction]);
 
   // 自定义图标状态
   const [customIcons, setCustomIcons] = useState<CustomIcon[]>([]);
@@ -225,31 +244,34 @@ export const AddTransactionModal = React.memo(({
       const krwAmount = parseFloat(amountKRW);
       const cnyAmount = parseFloat(amountCNY);
 
-      const transaction: Omit<Transaction, 'id' | 'timestamp' | 'date'> = {
+      const transactionData = {
         name: merchantName.trim(),
         amountKRW: krwAmount,
         amountCNY: cnyAmount,
         payer,
         splitType,
         icon,
-        // 根据分摊类型添加相应字段
         ...(splitType === 'even' && { splitAmong }),
         ...(splitType === 'treat' && { treatedBy }),
       };
 
-      // 3. 模拟异步操作 (添加短暂延迟以显示动画)
+      // 3. 模拟异步操作
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      // 4. 执行添加操作
-      onAdd(transaction);
+      // 4. 执行操作
+      if (editingTransaction && onUpdate) {
+        onUpdate(editingTransaction.id, transactionData);
+      } else {
+        onAdd(transactionData);
+      }
 
       // 5. 设置为 success
       setButtonState('success');
 
-      // 6. 1秒后恢复,且不清空表单,不关闭 modal
+      // 6. 1秒后恢复
       setTimeout(() => {
         setButtonState('normal');
-        // 注意: 不调用 onClose(),留在当前页面
+        if (editingTransaction) onClose(); // 编辑完成后自动关闭
       }, 1000);
 
     } catch (error) {
@@ -439,10 +461,10 @@ export const AddTransactionModal = React.memo(({
           {/* 标题 */}
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-[#2D3436] mb-2">
-              添加交易记录
+              {editingTransaction ? '编辑交易记录' : '添加交易记录'}
             </h2>
             <p className="text-sm text-[#636E72]">
-              记录您的消费信息
+              {editingTransaction ? '修改您的消费信息' : '记录您的消费信息'}
             </p>
           </div>
 
@@ -804,8 +826,8 @@ export const AddTransactionModal = React.memo(({
                   : 'bg-gradient-to-r from-green-400 to-green-500 text-white'
               }`}
             >
-              {buttonState === 'normal' && '添加记录'}
-              {buttonState === 'submitting' && '添加中...'}
+              {buttonState === 'normal' && (editingTransaction ? '保存修改' : '添加记录')}
+              {buttonState === 'submitting' && (editingTransaction ? '保存中...' : '添加中...')}
               {buttonState === 'success' && <CheckAnimation />}
             </button>
           </div>
