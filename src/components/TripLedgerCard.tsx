@@ -217,15 +217,33 @@ export function TripLedgerCard({
                 </div>
 
                 {/* Progress Bar */}
-                <div className="h-2 w-full bg-white/20 rounded-full mb-2">
-                    <div
-                        className="h-full bg-gradient-to-r from-[#FF6B81] to-[#F7D794] rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(budgetPercentage, 100)}%` }}
+                <div className="h-2 w-full bg-white/20 rounded-full mb-2 overflow-hidden">
+                    <motion.div
+                        className="h-full bg-gradient-to-r from-[#FF6B81] to-[#F7D794] rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(budgetPercentage, 100)}%` }}
+                        transition={{ 
+                            duration: 1.2, 
+                            ease: [0.34, 1.56, 0.64, 1], // 自定义流体感曲线
+                            delay: 0.2 
+                        }}
                     />
                 </div>
                 <div className="flex justify-between text-[10px] font-bold opacity-60">
-                    <span>{budgetPercentage.toFixed(0)}% used</span>
-                    <span>{settings && formatKRW(remainingBudget)} left</span>
+                    <motion.span
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.8 }}
+                    >
+                        {budgetPercentage.toFixed(0)}% used
+                    </motion.span>
+                    <motion.span
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.8 }}
+                    >
+                        {settings && formatKRW(remainingBudget)} left
+                    </motion.span>
                 </div>
             </div>
 
