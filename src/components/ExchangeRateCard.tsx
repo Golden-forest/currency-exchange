@@ -103,27 +103,19 @@ export function ExchangeRateCard({ onAddToLedger }: Props) {
         <span className="text-red-400 text-xs font-medium">{error}</span>
       ) : (
         <>
-          {/* 主汇率 */}
-          <div className="flex items-baseline justify-center gap-1">
-            <span className="text-text-secondary text-xs">1 KRW =</span>
-            <span className="text-text-primary text-sm font-bold">{rate ? formatRate(rate) : '-'}</span>
-            <span className="text-text-secondary text-xs">CNY</span>
-          </div>
-
-          {/* 反向汇率 */}
-          <div className="flex items-baseline justify-center gap-1">
-            <span className="text-text-secondary text-[10px]">1 CNY ≈</span>
-            <span className="text-text-secondary text-xs font-semibold">{rate ? formatReverseRate(rate) : '-'}</span>
+          {/* 汇率信息和更新时间 - 同一行显示 */}
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-text-secondary text-[10px]">1 CNY =</span>
+            <span className="text-text-primary text-[11px] font-bold">{rate ? formatReverseRate(rate) : '-'}</span>
             <span className="text-text-secondary text-[10px]">KRW</span>
+            {lastUpdate && (
+              <>
+                <span className="text-text-secondary text-[10px]">·</span>
+                <span className="text-text-secondary text-[10px]">更新:</span>
+                <span className="text-text-secondary text-[10px] font-medium">{formatTime(lastUpdate)}</span>
+              </>
+            )}
           </div>
-
-          {/* 更新时间 */}
-          {lastUpdate && (
-            <div className="flex items-center justify-center gap-1">
-              <span className="text-text-secondary text-[10px]">更新:</span>
-              <span className="text-text-secondary text-[10px] font-medium">{formatTime(lastUpdate)}</span>
-            </div>
-          )}
         </>
       )}
 
